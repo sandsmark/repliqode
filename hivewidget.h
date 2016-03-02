@@ -19,6 +19,8 @@ public:
     HiveWidget(QWidget *parent = 0);
     ~HiveWidget();
 
+    void setNodes(const QMap<QString, QList<QString>> nodes);
+
 protected:
     virtual void paintEvent(QPaintEvent *);
     virtual void mouseMoveEvent(QMouseEvent *event);
@@ -27,10 +29,11 @@ protected:
 private:
     void calculate();
 
+    QMultiMap<QString, QString> m_nodes;
+    QMultiMap<QString, QString> m_edges;
+
     QList<Edge> m_edgePaths;
     QMap<QString, QColor> m_nodeColors;
-    QMap<QString, QList<QString>> m_nodes;
-    QMultiMap<QString, QString> m_edges;
     QMap<QString, QColor> m_colors;
     QMap<QString, QPoint> m_positions;
     QString m_closest;

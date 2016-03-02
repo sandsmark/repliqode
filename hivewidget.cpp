@@ -5,6 +5,7 @@
 #include <QElapsedTimer>
 #include <QMouseEvent>
 
+// For generating test data
 QString createNode()
 {
     QString type;
@@ -30,34 +31,35 @@ QString createNode()
 HiveWidget::HiveWidget(QWidget *parent)
     : QOpenGLWidget(parent)
 {
+    setWindowFlags(Qt::Dialog);
+    resize(1600, 1200);
+    setMouseTracking(true);
+
+    // Generate some test data to work on
     for(int i = 0; i<75; i++) {
-        m_nodes["markers"].append(QString("marker %1").arg(i));
+        m_nodes.insert("markers", QString("marker %1").arg(i));
     }
     for(int i = 0; i<100; i++) {
-        m_nodes["programs"].append(QString("program %1").arg(i));
+        m_nodes.insert("programs", QString("program %1").arg(i));
     }
     for(int i = 0; i<50; i++) {
-        m_nodes["reductions"].append(QString("reduction %1").arg(i));
+        m_nodes.insert("reductions", QString("reduction %1").arg(i));
     }
 
     QMap<QString, QString> nodeGroups;
     for (const QString &group : m_nodes.keys()) {
-        for (const QString &node : m_nodes.value(group)) {
+        for (const QString &node : m_nodes.values(group)) {
             nodeGroups[node] = group;
         }
     }
 
-    for (int i=0; i<500; i++) {
+    for (int i=0; i<50; i++) {
         QString nodeA = createNode();
         QString nodeB = createNode();
         if (m_edges.value(nodeA) != nodeB && nodeGroups[nodeA] != nodeGroups[nodeB]) {
             m_edges.insert(nodeA, nodeB);
         }
     }
-
-    setWindowFlags(Qt::Dialog);
-    resize(1600, 1200);
-    setMouseTracking(true);
 
     calculate();
 }
@@ -115,9 +117,6 @@ void HiveWidget::paintEvent(QPaintEvent *)
         ellipseColor.setAlpha(128);
         painter.setPen(Qt::NoPen);
         painter.setBrush(ellipseColor);
-        if (!m_positions.contains(otherNode)) {
-            qWarning() << otherNode;
-        }
         painter.drawEllipse(m_positions[otherNode].x() - 5, m_positions[otherNode].y() - 5, 10, 10);
 
         painter.setPen(penColor);
@@ -159,6 +158,8 @@ void HiveWidget::calculate()
 
     int maxGroupSize = 0;
     const int numGroups = m_nodes.keys().count();
+
+    // Automatically generate some colors
     const int hueStep = 359 / numGroups;
     int hue = 0;
     QMap<QString, QColor> groupColors;
@@ -166,20 +167,20 @@ void HiveWidget::calculate()
         groupColors.insert(group, QColor::fromHsv(hue, 128, 255));
         hue += hueStep;
 
-        maxGroupSize = qMax(maxGroupSize, m_nodes[group].count());
+        maxGroupSize = qMax(maxGroupSize, m_nodes.count(group));
     }
 
     const int cx = width() / 2;
     const int cy = height() / 2;
     const double maxLength = qMin(width(), height()) - 20;
-    const double radiusStep = (M_PI * 2) / m_nodes.keys().count();
+    const double radiusStep = (M_PI * 2) / numGroups;
     double r = 0;
     for(const QString &group : m_nodes.keys()) {
-        const double axisLength = (m_nodes[group].count() / double(maxGroupSize)) * maxLength / 2;
+        const double axisLength = (m_nodes.count(group) / double(maxGroupSize)) * maxLength / 2;
 
-        double offsetStep = (axisLength - 20) / m_nodes[group].count();
+        double offsetStep = (axisLength - 20) / m_nodes.count(group);
         double offset = 20;
-        for (const QString node : m_nodes[group]) {
+        for (const QString node : m_nodes.values(group)) {
             int nodeX = cos(r) * offset + cx;
             int nodeY = sin(r) * offset + cy;
             m_positions.insert(node, QPoint(nodeX, nodeY));
