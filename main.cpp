@@ -15,7 +15,7 @@ QString createNode()
         break;
     case 1:
         type = "program %1";
-        num = qrand() % 100;
+        num = qrand() % 50;
         break;
     default:
         type = "reduction %1";
@@ -37,7 +37,7 @@ int main(int argc, char *argv[])
     for(int i = 0; i<75; i++) {
         nodes.insert("markers", QString("marker %1").arg(i));
     }
-    for(int i = 0; i<100; i++) {
+    for(int i = 0; i<50; i++) {
         nodes.insert("programs", QString("program %1").arg(i));
     }
     for(int i = 0; i<50; i++) {

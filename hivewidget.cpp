@@ -142,25 +142,27 @@ void HiveWidget::calculate()
         maxGroupSize = qMax(maxGroupSize, m_nodes.count(group));
     }
 
+    QHash<QString, double> nodeAngles;
     const int cx = width() / 2;
     const int cy = height() / 2;
     const double maxLength = qMin(width(), height()) - 20;
-    const double radiusStep = (M_PI * 2) / numGroups;
-    double r = 0;
+    const double angleStep = (M_PI * 2) / numGroups;
+    double angle = 0;
     for(const QString &group : m_nodes.keys()) {
         const double axisLength = (m_nodes.count(group) / double(maxGroupSize)) * maxLength / 2;
 
         double offsetStep = (axisLength - 20) / m_nodes.count(group);
         double offset = 20;
         for (const QString node : m_nodes.values(group)) {
-            int nodeX = cos(r) * offset + cx;
-            int nodeY = sin(r) * offset + cy;
+            int nodeX = cos(angle) * offset + cx;
+            int nodeY = sin(angle) * offset + cy;
+            nodeAngles[node] = angle;
             m_positions.insert(node, QPoint(nodeX, nodeY));
             m_nodeColors.insert(node, groupColors[group]);
 
             offset += offsetStep;
         }
-        r += radiusStep;
+        angle += angleStep;
     }
 
     QPainterPathStroker stroker;
@@ -182,6 +184,14 @@ void HiveWidget::calculate()
         double magnitude = hypot(nodeX - cx, nodeY - cy);
         double otherMagnitude = hypot(otherX - cx, otherY - cy);
         double averageRadians = atan2(((nodeY - cy) + (otherY - cy))/2, ((nodeX - cx) + (otherX - cx))/2);
+
+        if (nodeAngles[edge.source] == nodeAngles[edge.target]) {
+            if (magnitude > otherMagnitude) {
+                averageRadians += 0.1;
+            } else {
+                averageRadians -= 0.1;
+            }
+        }
 
         double averageMagnitude;
         if (m_scaleEdgeMax) {
