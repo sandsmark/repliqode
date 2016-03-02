@@ -5,68 +5,29 @@
 #include <QElapsedTimer>
 #include <QMouseEvent>
 
-// For generating test data
-QString createNode()
-{
-    QString type;
-    int r = qrand() % 3;
-    int num = 0;
-    switch (r) {
-    case 0:
-        type = "marker %1";
-        num = qrand() % 75;
-        break;
-    case 1:
-        type = "program %1";
-        num = qrand() % 100;
-        break;
-    default:
-        type = "reduction %1";
-        num = qrand() % 50;
-        break;
-    }
-    return type.arg(num);
-}
-
 HiveWidget::HiveWidget(QWidget *parent)
     : QOpenGLWidget(parent)
 {
-    setWindowFlags(Qt::Dialog);
-    resize(1600, 1200);
     setMouseTracking(true);
-
-    // Generate some test data to work on
-    for(int i = 0; i<75; i++) {
-        m_nodes.insert("markers", QString("marker %1").arg(i));
-    }
-    for(int i = 0; i<100; i++) {
-        m_nodes.insert("programs", QString("program %1").arg(i));
-    }
-    for(int i = 0; i<50; i++) {
-        m_nodes.insert("reductions", QString("reduction %1").arg(i));
-    }
-
-    QMap<QString, QString> nodeGroups;
-    for (const QString &group : m_nodes.keys()) {
-        for (const QString &node : m_nodes.values(group)) {
-            nodeGroups[node] = group;
-        }
-    }
-
-    for (int i=0; i<50; i++) {
-        QString nodeA = createNode();
-        QString nodeB = createNode();
-        if (m_edges.value(nodeA) != nodeB && nodeGroups[nodeA] != nodeGroups[nodeB]) {
-            m_edges.insert(nodeA, nodeB);
-        }
-    }
-
-    calculate();
 }
 
 HiveWidget::~HiveWidget()
 {
 
+}
+
+void HiveWidget::setNodes(const QMultiMap<QString, QString> &nodes)
+{
+    m_nodes = nodes;
+    calculate();
+    update();
+}
+
+void HiveWidget::setEdges(const QMultiMap<QString, QString> &edges)
+{
+    m_edges = edges;
+    calculate();
+    update();
 }
 
 void HiveWidget::paintEvent(QPaintEvent *)
@@ -155,6 +116,10 @@ void HiveWidget::calculate()
     m_positions.clear();
     m_nodeColors.clear();
     m_edgePaths.clear();
+
+    if (m_nodes.isEmpty() || m_edges.isEmpty()) {
+        return;
+    }
 
     int maxGroupSize = 0;
     const int numGroups = m_nodes.keys().count();

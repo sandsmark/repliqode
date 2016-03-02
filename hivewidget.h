@@ -19,7 +19,8 @@ public:
     HiveWidget(QWidget *parent = 0);
     ~HiveWidget();
 
-    void setNodes(const QMap<QString, QList<QString>> nodes);
+    void setNodes(const QMultiMap<QString, QString> &nodes);
+    void setEdges(const QMultiMap<QString, QString> &edges);
 
 protected:
     virtual void paintEvent(QPaintEvent *);
