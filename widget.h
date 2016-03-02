@@ -23,6 +23,7 @@ public:
 
 protected:
     virtual void paintEvent(QPaintEvent *);
+    virtual void mouseMoveEvent(QMouseEvent *event);
 
 private:
     QPoint getNodePosition(QString node);
@@ -31,6 +32,8 @@ private:
     //QList<Edge> m_edges;
     QMultiMap<QString, QString> m_edges;
     QMap<QString, QColor> m_colors;
+    QMap<QString, QPoint> m_positions;
+    QString m_closest;
     int m_maxNodes;
 };
 
