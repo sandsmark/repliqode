@@ -6,7 +6,8 @@
 #include <QMouseEvent>
 
 HiveWidget::HiveWidget(QWidget *parent)
-    : QOpenGLWidget(parent)
+    : QOpenGLWidget(parent),
+      m_scaleEdgeMax(true)
 {
     setMouseTracking(true);
 }
@@ -182,8 +183,13 @@ void HiveWidget::calculate()
             double otherMagnitude = hypot(otherX - cx, otherY - cy);
             double averageRadians = atan2(((nodeY - cy) + (otherY - cy))/2, ((nodeX - cx) + (otherX - cx))/2);
 
-//            double averageMagnitude = (magnitude + otherMagnitude) / 2;
-            double averageMagnitude = qMax(magnitude, otherMagnitude);
+            double averageMagnitude;
+            if (m_scaleEdgeMax) {
+                averageMagnitude = qMax(magnitude, otherMagnitude);
+            } else {
+                averageMagnitude = (magnitude + otherMagnitude) / 2;
+            }
+
             QPointF controlPoint(cos(averageRadians) * averageMagnitude + cx, sin(averageRadians) * averageMagnitude + cy);
 
             QLinearGradient gradient(m_positions[node], m_positions[otherNode]);

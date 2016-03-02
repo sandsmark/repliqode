@@ -38,6 +38,7 @@ private:
     QMap<QString, QColor> m_colors;
     QMap<QString, QPoint> m_positions;
     QString m_closest;
+    bool m_scaleEdgeMax;
 };
 
 #endif // HIVEWIDGET_H
