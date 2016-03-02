@@ -51,12 +51,15 @@ int main(int argc, char *argv[])
         }
     }
 
-    QMultiMap<QString, QString> edges;
+    QList<Edge> edges;
     for (int i=0; i<50; i++) {
         QString nodeA = createNode();
         QString nodeB = createNode();
-        if (edges.value(nodeA) != nodeB && nodeGroups[nodeA] != nodeGroups[nodeB]) {
-            edges.insert(nodeA, nodeB);
+        Edge edge;
+        edge.source = nodeA;
+        edge.target = nodeB;
+        if (!edges.contains(edge)) {
+            edges.append(edge);
         }
     }
 

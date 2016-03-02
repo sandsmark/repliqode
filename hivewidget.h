@@ -5,10 +5,14 @@
 #include <QMultiMap>
 
 struct Edge {
-    QString first;
-    QString second;
+    QString source;
+    QString target;
     QPainterPath path;
     QBrush brush;
+
+    bool operator==(const Edge &other) {
+        return (source == other.source && target == other.target);
+    }
 };
 
 class HiveWidget : public QOpenGLWidget
@@ -20,7 +24,7 @@ public:
     ~HiveWidget();
 
     void setNodes(const QMultiMap<QString, QString> &nodes);
-    void setEdges(const QMultiMap<QString, QString> &edges);
+    void setEdges(const QList<Edge> &edges);
 
 protected:
     virtual void paintEvent(QPaintEvent *);
@@ -31,9 +35,8 @@ private:
     void calculate();
 
     QMultiMap<QString, QString> m_nodes;
-    QMultiMap<QString, QString> m_edges;
+    QList<Edge> m_edges;
 
-    QList<Edge> m_edgePaths;
     QMap<QString, QColor> m_nodeColors;
     QMap<QString, QColor> m_colors;
     QMap<QString, QPoint> m_positions;

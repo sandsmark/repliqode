@@ -24,7 +24,7 @@ void HiveWidget::setNodes(const QMultiMap<QString, QString> &nodes)
     update();
 }
 
-void HiveWidget::setEdges(const QMultiMap<QString, QString> &edges)
+void HiveWidget::setEdges(const QList<Edge> &edges)
 {
     m_edges = edges;
     calculate();
@@ -50,18 +50,21 @@ void HiveWidget::paintEvent(QPaintEvent *)
         painter.drawPoint(m_positions[node]);
     }
 
+    // Draw underlying edges first
     painter.setPen(Qt::NoPen);
-    for (const Edge &edge : m_edgePaths) {
-        if (edge.first == m_closest) {
+
+    for (const Edge &edge : m_edges) {
+        if (edge.source == m_closest) {
             continue;
         }
         painter.setBrush(edge.brush);
         painter.drawPath(edge.path);
     }
 
+    // Draw active edges on top
     painter.setBrush(m_nodeColors[m_closest]);
-    for (const Edge &edge : m_edgePaths) {
-        if (edge.first != m_closest) {
+    for (const Edge &edge : m_edges) {
+        if (edge.source != m_closest) {
             continue;
         }
         painter.drawPath(edge.path);
@@ -74,15 +77,19 @@ void HiveWidget::paintEvent(QPaintEvent *)
     painter.drawText(m_positions[m_closest], m_closest);
 
     penColor.setAlpha(128);
-    for (const QString &otherNode : m_edges.values(m_closest)) {
-        QColor ellipseColor = m_nodeColors[otherNode];
+    for (const Edge &edge : m_edges) {
+        if (edge.source != m_closest) {
+            continue;
+        }
+
+        QColor ellipseColor = m_nodeColors[edge.target];
         ellipseColor.setAlpha(128);
         painter.setPen(Qt::NoPen);
         painter.setBrush(ellipseColor);
-        painter.drawEllipse(m_positions[otherNode].x() - 5, m_positions[otherNode].y() - 5, 10, 10);
+        painter.drawEllipse(m_positions[edge.target].x() - 5, m_positions[edge.target].y() - 5, 10, 10);
 
         painter.setPen(penColor);
-        painter.drawText(m_positions[otherNode], otherNode);
+        painter.drawText(m_positions[edge.target], edge.target);
     }
 }
 
@@ -116,7 +123,6 @@ void HiveWidget::calculate()
     timer.start();
     m_positions.clear();
     m_nodeColors.clear();
-    m_edgePaths.clear();
 
     if (m_nodes.isEmpty() || m_edges.isEmpty()) {
         return;
@@ -166,51 +172,41 @@ void HiveWidget::calculate()
     } else if (m_edges.count() > 100) {
         lineAlpha = 64;
     }
-    for (QString node : m_positions.keys()) {
-        if (!m_edges.contains(node)) {
-            continue;
+
+    for (Edge &edge : m_edges) {
+        const double nodeX = m_positions[edge.source].x();
+        const double nodeY = m_positions[edge.source].y();
+        const double otherX = m_positions[edge.target].x();
+        const double otherY = m_positions[edge.target].y();
+
+        double magnitude = hypot(nodeX - cx, nodeY - cy);
+        double otherMagnitude = hypot(otherX - cx, otherY - cy);
+        double averageRadians = atan2(((nodeY - cy) + (otherY - cy))/2, ((nodeX - cx) + (otherX - cx))/2);
+
+        double averageMagnitude;
+        if (m_scaleEdgeMax) {
+            averageMagnitude = qMax(magnitude, otherMagnitude);
+        } else {
+            averageMagnitude = (magnitude + otherMagnitude) / 2;
         }
 
-        for (const QString &otherNode : m_edges.values(node)) {
-            Edge edge;
+        QPointF controlPoint(cos(averageRadians) * averageMagnitude + cx, sin(averageRadians) * averageMagnitude + cy);
 
-            const double nodeX = m_positions[node].x();
-            const double nodeY = m_positions[node].y();
-            const double otherX = m_positions[otherNode].x();
-            const double otherY = m_positions[otherNode].y();
+        QLinearGradient gradient(m_positions[edge.source], m_positions[edge.target]);
+        QColor color = m_nodeColors[edge.source];
+        color.setAlpha(lineAlpha);
+        gradient.setColorAt(0, color);
+        color.setAlpha(lineAlpha / 2);
+        gradient.setColorAt(0.5, color);
+        color = m_nodeColors[edge.target];
+        color.setAlpha(lineAlpha / 3);
+        gradient.setColorAt(1, color);
+        edge.brush = QBrush(gradient);
 
-            double magnitude = hypot(nodeX - cx, nodeY - cy);
-            double otherMagnitude = hypot(otherX - cx, otherY - cy);
-            double averageRadians = atan2(((nodeY - cy) + (otherY - cy))/2, ((nodeX - cx) + (otherX - cx))/2);
-
-            double averageMagnitude;
-            if (m_scaleEdgeMax) {
-                averageMagnitude = qMax(magnitude, otherMagnitude);
-            } else {
-                averageMagnitude = (magnitude + otherMagnitude) / 2;
-            }
-
-            QPointF controlPoint(cos(averageRadians) * averageMagnitude + cx, sin(averageRadians) * averageMagnitude + cy);
-
-            QLinearGradient gradient(m_positions[node], m_positions[otherNode]);
-            QColor color = m_nodeColors[node];
-            color.setAlpha(lineAlpha);
-            gradient.setColorAt(0, color);
-            color.setAlpha(lineAlpha / 2);
-            gradient.setColorAt(0.5, color);
-            color = m_nodeColors[otherNode];
-            color.setAlpha(lineAlpha / 3);
-            gradient.setColorAt(1, color);
-            edge.brush = QBrush(gradient);
-
-            QPainterPath path;
-            path.moveTo(m_positions[node]);
-            path.quadTo(controlPoint, m_positions[otherNode]);
-            edge.first = node;
-            edge.second = otherNode;
-            edge.path = stroker.createStroke(path);
-            m_edgePaths.append(edge);
-        }
+        QPainterPath path;
+        path.moveTo(m_positions[edge.source]);
+        path.quadTo(controlPoint, m_positions[edge.target]);
+        edge.path = stroker.createStroke(path);
     }
     qDebug() << "calculating took" << timer.restart() << "ms";
 }
