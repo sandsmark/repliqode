@@ -14,7 +14,8 @@ TEMPLATE = app
 CONFIG += c++11
 
 
-SOURCES += main.cpp\
-        widget.cpp
+SOURCES += main.cpp \
+    hivewidget.cpp
 
-HEADERS  += widget.h
+HEADERS  += \
+    hivewidget.h

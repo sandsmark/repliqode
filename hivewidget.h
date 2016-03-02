@@ -1,5 +1,5 @@
-#ifndef WIDGET_H
-#define WIDGET_H
+#ifndef HIVEWIDGET_H
+#define HIVEWIDGET_H
 
 #include <QOpenGLWidget>
 #include <QMultiMap>
@@ -11,13 +11,13 @@ struct Edge {
     QBrush brush;
 };
 
-class Widget : public QOpenGLWidget
+class HiveWidget : public QOpenGLWidget
 {
     Q_OBJECT
 
 public:
-    Widget(QWidget *parent = 0);
-    ~Widget();
+    HiveWidget(QWidget *parent = 0);
+    ~HiveWidget();
 
 protected:
     virtual void paintEvent(QPaintEvent *);
@@ -36,4 +36,4 @@ private:
     QString m_closest;
 };
 
-#endif // WIDGET_H
+#endif // HIVEWIDGET_H

@@ -1,4 +1,4 @@
-#include "widget.h"
+#include "hivewidget.h"
 #include <QDebug>
 #include <qmath.h>
 #include <QPainter>
@@ -27,7 +27,7 @@ QString createNode()
     return type.arg(num);
 }
 
-Widget::Widget(QWidget *parent)
+HiveWidget::HiveWidget(QWidget *parent)
     : QOpenGLWidget(parent)
 {
     for(int i = 0; i<75; i++) {
@@ -62,12 +62,12 @@ Widget::Widget(QWidget *parent)
     calculate();
 }
 
-Widget::~Widget()
+HiveWidget::~HiveWidget()
 {
 
 }
 
-void Widget::paintEvent(QPaintEvent *)
+void HiveWidget::paintEvent(QPaintEvent *)
 {
     QElapsedTimer timer;
     timer.start();
@@ -125,7 +125,7 @@ void Widget::paintEvent(QPaintEvent *)
     }
 }
 
-void Widget::mouseMoveEvent(QMouseEvent *event)
+void HiveWidget::mouseMoveEvent(QMouseEvent *event)
 {
     double minDist = width();
     QString closest;
@@ -142,14 +142,14 @@ void Widget::mouseMoveEvent(QMouseEvent *event)
     }
 }
 
-void Widget::resizeEvent(QResizeEvent *event)
+void HiveWidget::resizeEvent(QResizeEvent *event)
 {
     calculate();
     QOpenGLWidget::resizeEvent(event);
     update();
 }
 
-void Widget::calculate()
+void HiveWidget::calculate()
 {
     QElapsedTimer timer;
     timer.start();

@@ -1,4 +1,4 @@
-#include "widget.h"
+#include "hivewidget.h"
 #include <QApplication>
 #include <QSurfaceFormat>
 
@@ -9,7 +9,7 @@ int main(int argc, char *argv[])
     fmt.setSamples(2);
     QSurfaceFormat::setDefaultFormat(fmt);
 
-    Widget w;
+    HiveWidget w;
     w.show();
 
     return a.exec();
