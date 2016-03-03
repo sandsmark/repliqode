@@ -129,27 +129,43 @@ void HiveWidget::calculate()
     }
 
     int maxGroupSize = 0;
-    const int numGroups = m_nodes.keys().count();
+    const int numGroups = m_nodes.uniqueKeys().count();
 
     // Automatically generate some colors
     const int hueStep = 359 / numGroups;
     int hue = 0;
     QMap<QString, QColor> groupColors;
-    foreach(const QString group, m_nodes.keys()) {
+    foreach(const QString group, m_nodes.uniqueKeys()) {
         groupColors.insert(group, QColor::fromHsv(hue, 128, 255));
         hue += hueStep;
 
         maxGroupSize = qMax(maxGroupSize, m_nodes.count(group));
     }
 
+
     QHash<QString, double> nodeAngles;
     const int cx = width() / 2;
     const int cy = height() / 2;
-    const double maxLength = qMin(width(), height()) - 20;
     const double angleStep = (M_PI * 2) / numGroups;
     double angle = 0;
-    for(const QString &group : m_nodes.keys()) {
-        const double axisLength = (m_nodes.count(group) / double(maxGroupSize)) * maxLength / 2;
+    double maxLength = (qMax(width(), height())) / 2;
+
+    // Find the optimal scale
+    for (int i=0; i<numGroups; i++) {
+        if (angle > M_PI) {
+            angle -= M_PI;
+        }
+        if (angle < M_PI / 2) {
+            maxLength = qMin(maxLength, cx / cos(angle));
+        } else {
+            maxLength = qMin(maxLength, cy / cos(angle - M_PI));
+        }
+        angle += angleStep;
+    }
+    maxLength -= 20;
+    angle = 0;
+    for(const QString &group : m_nodes.uniqueKeys()) {
+        const double axisLength = (m_nodes.count(group) / double(maxGroupSize)) * maxLength - 20;
 
         double offsetStep = (axisLength - 20) / m_nodes.count(group);
         double offset = 20;
@@ -186,11 +202,7 @@ void HiveWidget::calculate()
         double averageRadians = atan2(((nodeY - cy) + (otherY - cy))/2, ((nodeX - cx) + (otherX - cx))/2);
 
         if (nodeAngles[edge.source] == nodeAngles[edge.target]) {
-            if (magnitude > otherMagnitude) {
-                averageRadians += 0.1;
-            } else {
-                averageRadians -= 0.1;
-            }
+            averageRadians += (magnitude - otherMagnitude) / maxLength;
         }
 
         double averageMagnitude;

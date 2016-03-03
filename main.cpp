@@ -15,7 +15,7 @@ QString createNode()
         break;
     case 1:
         type = "program %1";
-        num = qrand() % 50;
+        num = qrand() % 5;
         break;
     default:
         type = "reduction %1";
@@ -52,7 +52,7 @@ int main(int argc, char *argv[])
     }
 
     QList<Edge> edges;
-    for (int i=0; i<50; i++) {
+    for (int i=0; i<500; i++) {
         QString nodeA = createNode();
         QString nodeB = createNode();
         Edge edge;
