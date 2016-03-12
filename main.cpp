@@ -11,7 +11,7 @@ int main(int argc, char *argv[])
 
     // Fix antialiasing quality of hive plot
     QSurfaceFormat fmt;
-    fmt.setSamples(2);
+    fmt.setSamples(32);
     QSurfaceFormat::setDefaultFormat(fmt);
 
     Window window;
