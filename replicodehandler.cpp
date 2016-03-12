@@ -95,7 +95,7 @@ void ReplicodeHandler::loadImage(QString file)
         } else if (type.contains("perf")) {
             group = "knowledge";
         } else {
-            qDebug() << nodeName << type;
+            qDebug() << "Uncategorized object class" << nodeName << type;
             group = "objects";
         }
 

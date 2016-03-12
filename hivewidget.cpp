@@ -97,7 +97,7 @@ void HiveWidget::paintEvent(QPaintEvent *)
     painter.setPen(Qt::NoPen);
 
     for (const Edge &edge : m_edges) {
-        if (edge.source == m_closest || edge.target == m_closest) {
+        if (edge.source == m_closest) {
             continue;
         }
         painter.setBrush(edge.brush);
@@ -111,13 +111,15 @@ void HiveWidget::paintEvent(QPaintEvent *)
     // Draw active edges on top
     for (const Edge &edge : m_edges) {
         if (edge.source == m_closest) {
-            painter.setBrush(m_nodeColors[m_closest]);
+            QColor color = m_nodeColors[edge.source];
+            color.setAlpha(192);
+            painter.setBrush(color);
             painter.drawPath(edge.path);
         }
+
+        // Draw twice, for subtle highlight
         if (edge.target == m_closest) {
-            QColor color = m_nodeColors[edge.source];
-            color.setAlpha(128);
-            painter.setBrush(color);
+            painter.setBrush(edge.highlightBrush);
             painter.drawPath(edge.path);
         }
     }
@@ -125,22 +127,21 @@ void HiveWidget::paintEvent(QPaintEvent *)
 
     QColor penColor(Qt::white);
     painter.setBrush(m_nodeColors[m_closest]);
-    painter.drawEllipse(m_positions[m_closest].x() - 10, m_positions[m_closest].y() - 10, 20, 20);
+    painter.drawEllipse(m_positions[m_closest].x() - 5, m_positions[m_closest].y() - 5, 10, 10);
     painter.setPen(penColor);
-    painter.drawText(m_positions[m_closest], m_closest);
+    int posX = m_positions[m_closest].x();
+    int posY = m_positions[m_closest].y();
+    painter.drawText(posX + 10, posY, m_closest);
 
     // Draw text and highlight positions of related edges
     for (const Edge &edge : m_edges) {
         if (edge.source == m_closest) {
-            QColor ellipseColor = m_nodeColors[m_closest];
-            ellipseColor.setAlpha(128);
-            painter.setPen(Qt::NoPen);
-            painter.setBrush(ellipseColor);
-            painter.drawEllipse(m_positions[edge.target].x() - 5, m_positions[edge.target].y() - 5, 10, 10);
-
-            penColor.setAlpha(255);
+            penColor.setAlpha(192);
             painter.setPen(penColor);
-            painter.drawText(m_positions[edge.target], edge.target);
+            QPoint position = m_positions[edge.target];
+            position.setX(position.x() + 10);
+            position.setY(position.y() + 10);
+            painter.drawText(position, edge.target);
         } else if (edge.target == m_closest) {
             penColor.setAlpha(128);
             painter.setPen(penColor);
@@ -153,6 +154,12 @@ void HiveWidget::paintEvent(QPaintEvent *)
     painter.setPen(penColor);
     if (m_sourcecode.contains(m_closest)) {
         m_sourcecode.value(m_closest)->drawContents(&painter);
+    }
+
+    // Theoretical but whatever
+    if (timer.elapsed() > 0) {
+        QString fpsMessage = QString("%1 fps").arg(int(1000 / timer.elapsed()));
+        painter.drawText(width() - fontMetrics.width(fpsMessage), height() - fontMetrics.height() / 4, fpsMessage);
     }
 }
 
@@ -254,14 +261,9 @@ void HiveWidget::calculate()
     }
 
     QPainterPathStroker stroker;
-    stroker.setWidth(1.1);
+    stroker.setWidth(1);
 
-    int lineAlpha = 192;
-    if (m_edges.count() > 1000) {
-        lineAlpha = 32;
-    } else if (m_edges.count() > 100) {
-        lineAlpha = 192;
-    }
+    int lineAlpha = 64;
 
     for (Edge &edge : m_edges) {
         const double nodeX = m_positions[edge.source].x();
@@ -289,21 +291,54 @@ void HiveWidget::calculate()
 
         QPointF controlPoint(cos(averageRadians) * averageMagnitude + cx, sin(averageRadians) * averageMagnitude + cy);
 
-        QLinearGradient gradient(m_positions[edge.source], m_positions[edge.target]);
-        QColor color = m_nodeColors[edge.source];
-        color.setAlpha(lineAlpha);
-        gradient.setColorAt(0, color);
-        color.setAlpha(lineAlpha / 2);
-        gradient.setColorAt(0.8, color);
-        color = m_nodeColors[edge.target];
-        color.setAlpha(lineAlpha / 3);
-        gradient.setColorAt(1, color);
-        edge.brush = QBrush(gradient);
+        { // Create normal background brush
+            QLinearGradient gradient(m_positions[edge.source], m_positions[edge.target]);
+            QColor color = m_nodeColors[edge.source];
+            color.setAlpha(lineAlpha);
+            gradient.setColorAt(0, color);
+            color.setAlpha(lineAlpha / 2);
+            gradient.setColorAt(0.8, color);
+            color = m_nodeColors[edge.target];
+            color.setAlpha(lineAlpha / 3);
+            gradient.setColorAt(1, color);
+            edge.brush = QBrush(gradient);
+        }
+
+        { // Create more prominent highlighting brush
+            QLinearGradient gradient(m_positions[edge.source], m_positions[edge.target]);
+            QColor color = m_nodeColors[edge.source];
+            color.setAlpha(lineAlpha);
+            gradient.setColorAt(0, color);
+            color.setAlpha(lineAlpha);
+            gradient.setColorAt(0.8, color);
+            color = m_nodeColors[edge.target];
+            color.setAlpha(lineAlpha / 1.5);
+            gradient.setColorAt(1, color);
+            edge.highlightBrush = QBrush(gradient);
+        }
 
         QPainterPath path;
         path.moveTo(m_positions[edge.source]);
         path.quadTo(controlPoint, m_positions[edge.target]);
-        edge.path = stroker.createStroke(path);
+
+        // Draw an arrowhead
+        const double arrowSize = 15.;
+        const double sourceAngle = atan2(controlPoint.y() - otherY, controlPoint.x() - otherX);
+        double arrowAngle = sourceAngle - M_PI / 10;
+        QPoint arrowHeadLeft = QPoint(otherX + cos(arrowAngle) * arrowSize,
+                                      otherY + sin(arrowAngle) * arrowSize);
+
+        arrowAngle = sourceAngle + M_PI / 10;
+        QPoint arrowHeadRight = QPoint(otherX + cos(arrowAngle) * arrowSize,
+                                       otherY + sin(arrowAngle) * arrowSize);
+
+        path = stroker.createStroke(path);
+        path.moveTo(m_positions[edge.target]);
+        path.lineTo(arrowHeadLeft);
+        path.lineTo(arrowHeadRight);
+        path.lineTo(m_positions[edge.target]);
+
+        edge.path = path;
     }
     qDebug() << "calculating took" << timer.restart() << "ms";
 }

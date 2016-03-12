@@ -10,6 +10,7 @@ struct Edge {
     QString target;
     QPainterPath path;
     QBrush brush;
+    QBrush highlightBrush;
 
     bool operator==(const Edge &other) {
         return (source == other.source && target == other.target);
