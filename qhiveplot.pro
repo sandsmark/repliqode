@@ -4,18 +4,23 @@
 #
 #-------------------------------------------------
 
-QT       += core gui
+QT       += core gui widgets
 
-greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
+LIBS +=  -lr_code -lr_comp -lr_exec
 
 TARGET = qhiveplot
 TEMPLATE = app
 
 CONFIG += c++11
 
-
 SOURCES += main.cpp \
-    hivewidget.cpp
+    hivewidget.cpp \
+    replicodehandler.cpp \
+    cHighlighterReplicode.cpp \
+    window.cpp
 
 HEADERS  += \
-    hivewidget.h
+    hivewidget.h \
+    replicodehandler.h \
+    cHighlighterReplicode.h \
+    window.h

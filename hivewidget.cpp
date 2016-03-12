@@ -7,7 +7,8 @@
 
 HiveWidget::HiveWidget(QWidget *parent)
     : QOpenGLWidget(parent),
-      m_scaleEdgeMax(true)
+      m_scaleEdgeMax(false),
+      m_scaleAxis(true)
 {
     setMouseTracking(true);
 }
@@ -31,6 +32,11 @@ void HiveWidget::setEdges(const QList<Edge> &edges)
     update();
 }
 
+void HiveWidget::setSource(const QMap<QString, QTextDocument *> sourcecode)
+{
+    m_sourcecode = sourcecode;
+}
+
 void HiveWidget::paintEvent(QPaintEvent *)
 {
     QElapsedTimer timer;
@@ -40,8 +46,45 @@ void HiveWidget::paintEvent(QPaintEvent *)
     painter.setRenderHint(QPainter::Antialiasing);
     painter.fillRect(rect(), Qt::black);
 
+    if (m_nodes.isEmpty() || m_edges.isEmpty()) {
+        return;
+    }
+
+    // Draw axis
+    const int cx = width() / 2;
+    const int cy = height() / 2;
+    const double angleStep = (M_PI * 2) / m_nodes.uniqueKeys().count();
+    double angle = M_PI/4;
+    QFontMetrics fontMetrics(font());
+    for(const QString &group : m_nodes.uniqueKeys()) {
+        QColor color = m_groupColors[group];
+        color.setAlpha(64);
+        painter.setPen(QPen(color, 1));
+        painter.drawLine(cx, cy, cos(angle) * m_axisLength + cx, sin(angle) * m_axisLength + cy);
+
+        // Draw name of axis, appropriately positioned
+        painter.save();
+        int textWidth = fontMetrics.width(group);
+        int degrees = 180 * angle / M_PI;
+        if (degrees > 90 && degrees < 270) {
+            degrees -= 180;
+        } else {
+            textWidth = 0;
+        }
+
+        color.setAlpha(200);
+        painter.setPen(color);
+        painter.translate(cos(angle) * (m_axisLength + textWidth + 10) + cx, sin(angle) * (m_axisLength + textWidth + 10) + cy);
+        painter.rotate(degrees);
+        painter.drawText(0, fontMetrics.height() / 4, group);
+        painter.restore();
+
+        angle += angleStep;
+    }
+
+    // Draw nodes
     QPen nodePen;
-    nodePen.setWidth(2);
+    nodePen.setWidth(5);
     for (const QString &node : m_positions.keys()) {
         QColor nodeColor = m_nodeColors[node];
         nodeColor.setAlpha(128);
@@ -54,52 +97,72 @@ void HiveWidget::paintEvent(QPaintEvent *)
     painter.setPen(Qt::NoPen);
 
     for (const Edge &edge : m_edges) {
-        if (edge.source == m_closest) {
+        if (edge.source == m_closest || edge.target == m_closest) {
             continue;
         }
         painter.setBrush(edge.brush);
         painter.drawPath(edge.path);
     }
 
-    // Draw active edges on top
-    painter.setBrush(m_nodeColors[m_closest]);
-    for (const Edge &edge : m_edges) {
-        if (edge.source != m_closest) {
-            continue;
-        }
-        painter.drawPath(edge.path);
+    if (m_closest.isEmpty()) {
+        return;
     }
+
+    // Draw active edges on top
+    for (const Edge &edge : m_edges) {
+        if (edge.source == m_closest) {
+            painter.setBrush(m_nodeColors[m_closest]);
+            painter.drawPath(edge.path);
+        }
+        if (edge.target == m_closest) {
+            QColor color = m_nodeColors[edge.source];
+            color.setAlpha(128);
+            painter.setBrush(color);
+            painter.drawPath(edge.path);
+        }
+    }
+
 
     QColor penColor(Qt::white);
     painter.setBrush(m_nodeColors[m_closest]);
-    painter.drawEllipse(m_positions[m_closest].x() - 5, m_positions[m_closest].y() - 5, 10, 10);
+    painter.drawEllipse(m_positions[m_closest].x() - 10, m_positions[m_closest].y() - 10, 20, 20);
     painter.setPen(penColor);
     painter.drawText(m_positions[m_closest], m_closest);
 
-    penColor.setAlpha(128);
+    // Draw text and highlight positions of related edges
     for (const Edge &edge : m_edges) {
-        if (edge.source != m_closest) {
-            continue;
+        if (edge.source == m_closest) {
+            QColor ellipseColor = m_nodeColors[m_closest];
+            ellipseColor.setAlpha(128);
+            painter.setPen(Qt::NoPen);
+            painter.setBrush(ellipseColor);
+            painter.drawEllipse(m_positions[edge.target].x() - 5, m_positions[edge.target].y() - 5, 10, 10);
+
+            penColor.setAlpha(255);
+            painter.setPen(penColor);
+            painter.drawText(m_positions[edge.target], edge.target);
+        } else if (edge.target == m_closest) {
+            penColor.setAlpha(128);
+            painter.setPen(penColor);
+            painter.drawText(m_positions[edge.source], edge.source);
         }
+    }
 
-        QColor ellipseColor = m_nodeColors[edge.target];
-        ellipseColor.setAlpha(128);
-        painter.setPen(Qt::NoPen);
-        painter.setBrush(ellipseColor);
-        painter.drawEllipse(m_positions[edge.target].x() - 5, m_positions[edge.target].y() - 5, 10, 10);
-
-        painter.setPen(penColor);
-        painter.drawText(m_positions[edge.target], edge.target);
+    // Draw source code of current node
+    penColor.setAlpha(128);
+    painter.setPen(penColor);
+    if (m_sourcecode.contains(m_closest)) {
+        m_sourcecode.value(m_closest)->drawContents(&painter);
     }
 }
 
 void HiveWidget::mouseMoveEvent(QMouseEvent *event)
 {
     double minDist = width();
-    QString closest;
+    QString closest = m_clicked;
     for (const QString node : m_positions.keys()) {
         double dist = hypot(event->x() - m_positions[node].x(), event->y() - m_positions[node].y());
-        if (dist < 20 && dist < minDist) {
+        if (dist < 100 && dist < minDist) {
             minDist = dist;
             closest = node;
         }
@@ -108,6 +171,11 @@ void HiveWidget::mouseMoveEvent(QMouseEvent *event)
         m_closest = closest;
         update();
     }
+}
+
+void HiveWidget::mousePressEvent(QMouseEvent*)
+{
+    m_clicked = m_closest;
 }
 
 void HiveWidget::resizeEvent(QResizeEvent *event)
@@ -134,21 +202,19 @@ void HiveWidget::calculate()
     // Automatically generate some colors
     const int hueStep = 359 / numGroups;
     int hue = 0;
-    QMap<QString, QColor> groupColors;
     foreach(const QString group, m_nodes.uniqueKeys()) {
-        groupColors.insert(group, QColor::fromHsv(hue, 128, 255));
+        m_groupColors.insert(group, QColor::fromHsv(hue, 128, 255));
         hue += hueStep;
 
         maxGroupSize = qMax(maxGroupSize, m_nodes.count(group));
     }
 
-
     QHash<QString, double> nodeAngles;
     const int cx = width() / 2;
     const int cy = height() / 2;
     const double angleStep = (M_PI * 2) / numGroups;
-    double angle = 0;
-    double maxLength = (qMax(width(), height())) / 2;
+    double angle = M_PI/4;
+    m_axisLength = (qMin(width(), height())) / 2;
 
     // Find the optimal scale
     for (int i=0; i<numGroups; i++) {
@@ -156,25 +222,31 @@ void HiveWidget::calculate()
             angle -= M_PI;
         }
         if (angle < M_PI / 2) {
-            maxLength = qMin(maxLength, cx / cos(angle));
+            m_axisLength = qMin(m_axisLength, cx / cos(angle));
         } else {
-            maxLength = qMin(maxLength, cy / cos(angle - M_PI));
+            m_axisLength = qMin(m_axisLength, cy / cos(angle - M_PI));
         }
         angle += angleStep;
     }
-    maxLength -= 20;
-    angle = 0;
+    m_axisLength -= 50;
+    angle = M_PI/4;
     for(const QString &group : m_nodes.uniqueKeys()) {
-        const double axisLength = (m_nodes.count(group) / double(maxGroupSize)) * maxLength - 20;
+        double offsetStep;
+        if (m_scaleAxis) {
+            offsetStep = m_axisLength / (m_nodes.count(group) + 1);
+        } else {
+            offsetStep = (m_axisLength - 100) / maxGroupSize;
+        }
 
-        double offsetStep = (axisLength - 20) / m_nodes.count(group);
-        double offset = 20;
-        for (const QString node : m_nodes.values(group)) {
+        double offset = offsetStep * 2;
+        QStringList nodes = m_nodes.values(group);
+        qSort(nodes);
+        for (const QString node : nodes) {
             int nodeX = cos(angle) * offset + cx;
             int nodeY = sin(angle) * offset + cy;
             nodeAngles[node] = angle;
             m_positions.insert(node, QPoint(nodeX, nodeY));
-            m_nodeColors.insert(node, groupColors[group]);
+            m_nodeColors.insert(node, m_groupColors[group]);
 
             offset += offsetStep;
         }
@@ -188,7 +260,7 @@ void HiveWidget::calculate()
     if (m_edges.count() > 1000) {
         lineAlpha = 32;
     } else if (m_edges.count() > 100) {
-        lineAlpha = 64;
+        lineAlpha = 192;
     }
 
     for (Edge &edge : m_edges) {
@@ -202,7 +274,9 @@ void HiveWidget::calculate()
         double averageRadians = atan2(((nodeY - cy) + (otherY - cy))/2, ((nodeX - cx) + (otherX - cx))/2);
 
         if (nodeAngles[edge.source] == nodeAngles[edge.target]) {
-            averageRadians += (magnitude - otherMagnitude) / maxLength;
+            averageRadians += (magnitude - otherMagnitude) / m_axisLength;
+        } else if (fmod(nodeAngles[edge.source], M_PI) == fmod(nodeAngles[edge.target], M_PI)) {
+            averageRadians += (magnitude - otherMagnitude) / m_axisLength;
         }
 
         double averageMagnitude;
@@ -212,6 +286,7 @@ void HiveWidget::calculate()
             averageMagnitude = (magnitude + otherMagnitude) / 2;
         }
 
+
         QPointF controlPoint(cos(averageRadians) * averageMagnitude + cx, sin(averageRadians) * averageMagnitude + cy);
 
         QLinearGradient gradient(m_positions[edge.source], m_positions[edge.target]);
@@ -219,7 +294,7 @@ void HiveWidget::calculate()
         color.setAlpha(lineAlpha);
         gradient.setColorAt(0, color);
         color.setAlpha(lineAlpha / 2);
-        gradient.setColorAt(0.5, color);
+        gradient.setColorAt(0.8, color);
         color = m_nodeColors[edge.target];
         color.setAlpha(lineAlpha / 3);
         gradient.setColorAt(1, color);
