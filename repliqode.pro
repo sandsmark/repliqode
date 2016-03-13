@@ -8,6 +8,10 @@ QT       += core gui widgets
 
 LIBS +=  -lr_code -lr_comp -lr_exec
 
+exists(config.pri) {
+    include(config.pri)
+}
+
 # Hack to get QtCreator to pick it up
 INCLUDEPATH += $$(INCLUDEPATH)
 
