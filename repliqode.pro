@@ -23,11 +23,11 @@ CONFIG += c++11
 SOURCES += main.cpp \
     hivewidget.cpp \
     replicodehandler.cpp \
-    cHighlighterReplicode.cpp \
-    window.cpp
+    window.cpp \
+    replicodehighlighter.cpp
 
 HEADERS  += \
     hivewidget.h \
     replicodehandler.h \
-    cHighlighterReplicode.h \
-    window.h
+    window.h \
+    replicodehighlighter.h

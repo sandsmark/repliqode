@@ -1,6 +1,6 @@
 #include "replicodehandler.h"
 
-#include "cHighlighterReplicode.h"
+#include "replicodehighlighter.h"
 
 #include <sstream>
 #include <chrono>
@@ -109,7 +109,7 @@ void ReplicodeHandler::loadImage(QString file)
 
         m_nodes.insert(group, nodeName);
         QTextDocument *sourceDoc = new QTextDocument(QString::fromStdString(source.str()));
-        new cHighlighterReplicode(sourceDoc);
+        new ReplicodeHighlighter(sourceDoc);
         m_sourceCode.insert(nodeName, sourceDoc);
 
         r_code::SysObject *imageObject = m_image->code_segment.objects[i];
