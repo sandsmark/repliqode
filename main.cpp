@@ -29,7 +29,7 @@ int main(int argc, char *argv[])
     QSurfaceFormat::setDefaultFormat(fmt);
 
     Window window;
-    window.show();
+    window.showFullScreen();
 
     return application.exec();
 }
