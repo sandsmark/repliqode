@@ -31,3 +31,13 @@ HEADERS  += \
     replicodehandler.h \
     window.h \
     replicodehighlighter.h
+
+# Copy in some examples
+copydata.commands = $(COPY) \
+                    $$PWD/std.replicode \
+                    $$PWD/user.classes.replicode \
+                    $$PWD/example-all-objects.image \
+                    $$PWD/example-only-models.image \
+                    $$OUT_PWD
+first.depends = $(first) copydata
+QMAKE_EXTRA_TARGETS += first copydata
