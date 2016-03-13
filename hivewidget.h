@@ -6,6 +6,7 @@
 #include <QTextDocument>
 
 struct Edge {
+    bool isView = false;
     QString source;
     QString target;
     QPainterPath path;

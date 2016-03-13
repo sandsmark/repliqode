@@ -63,21 +63,27 @@ void HiveWidget::paintEvent(QPaintEvent *)
         painter.drawLine(cx, cy, cos(angle) * m_axisLength + cx, sin(angle) * m_axisLength + cy);
 
         // Draw name of axis, appropriately positioned
-        painter.save();
         int textWidth = fontMetrics.width(group);
+        int xOffset = 0;
+        int yOffset = 0;
         int degrees = 180 * angle / M_PI;
-        if (degrees > 90 && degrees < 270) {
-            degrees -= 180;
+        if (degrees > 135 && degrees < 225) {
+            xOffset = -textWidth - 10;
+            yOffset = fontMetrics.height() / 4;
+        } else if (degrees > 135 && degrees < 270) {
+            xOffset = -textWidth / 2;
+            yOffset = -fontMetrics.height() / 4;
+        } else if (degrees > 45 && degrees < 135) {
+            xOffset = -textWidth / 2;
+            yOffset = fontMetrics.height();
         } else {
-            textWidth = 0;
+            xOffset = 10;
+            yOffset = fontMetrics.height() / 4;
         }
 
         color.setAlpha(200);
         painter.setPen(color);
-        painter.translate(cos(angle) * (m_axisLength + textWidth + 10) + cx, sin(angle) * (m_axisLength + textWidth + 10) + cy);
-        painter.rotate(degrees);
-        painter.drawText(0, fontMetrics.height() / 4, group);
-        painter.restore();
+        painter.drawText(cos(angle) * (m_axisLength) + cx + xOffset, sin(angle) * (m_axisLength) + cy + yOffset, group);
 
         angle += angleStep;
     }
@@ -111,7 +117,12 @@ void HiveWidget::paintEvent(QPaintEvent *)
     // Draw active edges on top
     for (const Edge &edge : m_edges) {
         if (edge.source == m_closest) {
-            QColor color = m_nodeColors[edge.source];
+            QColor color;
+            if (edge.isView) {
+                color = QColor(Qt::white);
+            } else {
+                color = m_nodeColors[edge.source];
+            }
             color.setAlpha(192);
             painter.setBrush(color);
             painter.drawPath(edge.path);
@@ -131,7 +142,7 @@ void HiveWidget::paintEvent(QPaintEvent *)
     painter.setPen(penColor);
     int posX = m_positions[m_closest].x();
     int posY = m_positions[m_closest].y();
-    painter.drawText(posX + 10, posY, m_closest);
+    painter.drawText(posX + 5, posY, m_closest);
 
     // Draw text and highlight positions of related edges
     for (const Edge &edge : m_edges) {
@@ -140,7 +151,7 @@ void HiveWidget::paintEvent(QPaintEvent *)
             painter.setPen(penColor);
             QPoint position = m_positions[edge.target];
             position.setX(position.x() + 10);
-            position.setY(position.y() + 10);
+            position.setY(position.y() + 5);
             painter.drawText(position, edge.target);
         } else if (edge.target == m_closest) {
             penColor.setAlpha(128);
@@ -288,10 +299,14 @@ void HiveWidget::calculate()
             averageMagnitude = (magnitude + otherMagnitude) / 2;
         }
 
-
         QPointF controlPoint(cos(averageRadians) * averageMagnitude + cx, sin(averageRadians) * averageMagnitude + cy);
 
-        { // Create normal background brush
+        // Create normal background brush
+        if (edge.isView) {
+            QColor color(Qt::white);
+            color.setAlpha(lineAlpha / 3);
+            edge.brush = QBrush(color);
+        } else {
             QLinearGradient gradient(m_positions[edge.source], m_positions[edge.target]);
             QColor color = m_nodeColors[edge.source];
             color.setAlpha(lineAlpha);
@@ -304,7 +319,12 @@ void HiveWidget::calculate()
             edge.brush = QBrush(gradient);
         }
 
-        { // Create more prominent highlighting brush
+        // Create more prominent highlighting brush
+        if (edge.isView) {
+            QColor color(Qt::white);
+            color.setAlpha(lineAlpha);
+            edge.highlightBrush = QBrush(color);
+        } else {
             QLinearGradient gradient(m_positions[edge.source], m_positions[edge.target]);
             QColor color = m_nodeColors[edge.source];
             color.setAlpha(lineAlpha);

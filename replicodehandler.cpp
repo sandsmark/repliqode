@@ -77,26 +77,29 @@ void ReplicodeHandler::loadImage(QString file)
         QString type = QString::fromStdString(m_metadata->classes_by_opcodes[m_image->code_segment.objects[i]->code[0].asOpcode()].str_opcode);
         QString group;
         if (type.startsWith("mk.")) {
-            group = "learned";
+            group = "passive";
         } else if (type.startsWith("ont")) {
-            group = "knowledge";
+            group = "passive";
         } else if (type.startsWith("ent")) {
-            group = "knowledge";
+            group = "passive";
         } else if (type.contains("fact")) {
-            group = "learned";
+            group = "passive";
         } else if (type.contains("mdl")) {
-            group = "hlr";
+            group = "active";
         } else if (type.startsWith("cst")) {
-            group = "hlr";
+            group = "passive";
         } else if (type.contains("pgm")) {
-            group = "hlr";
+            group = "active";
         } else if (type.contains("grp")) {
             group = "groups";
         } else if (type.contains("perf")) {
-            group = "knowledge";
+            group = "passive";
+        } else if (type.contains("cmd")) {
+            group = "passive";
         } else {
             qDebug() << "Uncategorized object class" << nodeName << type;
-            group = "objects";
+//            group = "objects";
+            continue;
         }
 
         if (m_nodes.contains(group, nodeName)) {
@@ -114,8 +117,9 @@ void ReplicodeHandler::loadImage(QString file)
             r_code::SysView *view = imageObject->views[j];
             for (size_t k=0; k<view->references.size(); k++) {
                 Edge edge;
-                edge.target = nodeName;
-                edge.source = QString::fromStdString(m_decompiler->get_object_name(view->references[k]));
+                edge.source = nodeName;
+                edge.target = QString::fromStdString(m_decompiler->get_object_name(view->references[k]));
+                edge.isView = true;
                 m_edges.append(edge);
             }
         }
