@@ -46,42 +46,37 @@ void HiveWidget::paintEvent(QPaintEvent *)
         return;
     }
 
-    // Draw axis
-    const int cx = width() / 2;
-    const int cy = height() / 2;
-    const double angleStep = (M_PI * 2) / m_nodes.uniqueKeys().count();
-    double angle = M_PI/4;
     QFontMetrics fontMetrics(font());
-    for(const QString &group : m_nodes.uniqueKeys()) {
-        QColor color = m_groupColors[group];
-        color.setAlpha(64);
-        painter.setPen(QPen(color, 1));
-        painter.drawLine(cx, cy, cos(angle) * m_axisLength + cx, sin(angle) * m_axisLength + cy);
 
-        // Draw name of axis, appropriately positioned
-        int textWidth = fontMetrics.width(group);
-        int xOffset = 0;
-        int yOffset = 0;
-        int degrees = 180 * angle / M_PI;
-        if (degrees > 135 && degrees < 225) {
-            xOffset = -textWidth - 10;
-            yOffset = fontMetrics.height() / 4;
-        } else if (degrees > 135 && degrees < 270) {
-            xOffset = -textWidth / 2;
-            yOffset = -fontMetrics.height() / 4;
-        } else if (degrees > 45 && degrees < 135) {
-            xOffset = -textWidth / 2;
-            yOffset = fontMetrics.height();
-        } else {
-            xOffset = 10;
-            yOffset = fontMetrics.height() / 4;
+    // Draw legend
+    int maxWidth = 0;
+    for (const QString &groupName : m_groupColors.keys()) {
+        maxWidth = qMax(maxWidth, fontMetrics.width(groupName));
+    }
+    const int textX = width() - maxWidth - 10;
+    int textY = 20;
+    for (const QString &groupName : m_groupColors.keys()) {
+        painter.setPen(m_groupColors.value(groupName));
+        painter.drawText(textX, textY, groupName);
+        textY += fontMetrics.height();
+    }
+
+    // Draw underlying edges first
+    painter.setPen(Qt::NoPen);
+    for (const Edge &edge : m_edges) {
+        if (edge.source == m_closest) {
+            continue;
         }
+        if (m_closest.isEmpty()) {
+            painter.setBrush(edge.highlightBrush);
+        } else {
+            painter.setBrush(edge.brush);
+        }
+        painter.drawPath(edge.path);
+    }
 
-        color.setAlpha(200);
-        painter.setPen(color);
-        painter.drawText(cos(angle) * (m_axisLength) + cx + xOffset, sin(angle) * (m_axisLength) + cy + yOffset, group);
-
-        angle += angleStep;
+    if (m_closest.isEmpty()) {
+        return;
     }
 
     // Draw nodes
@@ -94,21 +89,7 @@ void HiveWidget::paintEvent(QPaintEvent *)
         painter.setPen(nodePen);
         painter.drawPoint(node.x, node.y);
     }
-
-    // Draw underlying edges first
     painter.setPen(Qt::NoPen);
-
-    for (const Edge &edge : m_edges) {
-        if (edge.source == m_closest) {
-            continue;
-        }
-        painter.setBrush(edge.brush);
-        painter.drawPath(edge.path);
-    }
-
-    if (m_closest.isEmpty()) {
-        return;
-    }
 
     // Draw active edges on top
     for (const Edge &edge : m_edges) {
@@ -154,8 +135,6 @@ void HiveWidget::paintEvent(QPaintEvent *)
     }
 
     // Draw source code of current node
-    penColor.setAlpha(128);
-    painter.setPen(penColor);
     if (m_nodes.value(m_closest).sourcecode) {
         m_nodes.value(m_closest).sourcecode->drawContents(&painter);
     }
@@ -167,18 +146,27 @@ void HiveWidget::paintEvent(QPaintEvent *)
     }
 }
 
-void HiveWidget::mouseMoveEvent(QMouseEvent *event)
+QString HiveWidget::getClosest(int x, int y)
 {
     double minDist = width();
-    QString closest = m_clicked;
+    QString closest;
     for (const QString &nodeName : m_nodes.keys()) {
         int nodeX = m_nodes.value(nodeName).x;
         int nodeY = m_nodes.value(nodeName).y;
-        double dist = hypot(event->x() - nodeX, event->y() - nodeY);
+        double dist = hypot(x - nodeX, y - nodeY);
         if (dist < 100 && dist < minDist) {
             minDist = dist;
             closest = nodeName;
         }
+    }
+    return closest;
+}
+
+void HiveWidget::mouseMoveEvent(QMouseEvent *event)
+{
+    QString closest = getClosest(event->x(), event->y());
+    if (closest.isEmpty()) {
+        closest = m_clicked;
     }
     if (closest != m_closest) {
         m_closest = closest;
@@ -186,9 +174,13 @@ void HiveWidget::mouseMoveEvent(QMouseEvent *event)
     }
 }
 
-void HiveWidget::mousePressEvent(QMouseEvent*)
+void HiveWidget::mousePressEvent(QMouseEvent *event)
 {
-    m_clicked = m_closest;
+    QString clicked = getClosest(event->x(), event->y());
+    if (clicked != m_clicked) {
+        m_clicked = clicked;
+        update();
+    }
 }
 
 void HiveWidget::resizeEvent(QResizeEvent *event)
@@ -250,7 +242,7 @@ void HiveWidget::calculate()
     // Calculate the angles between the axes, initialize the offsets of the nodes
     angle = M_PI/4;
     QHash<QString, double> groupAngles;
-    QMap<QString, double> axisOffsets;
+    QHash<QString, double> axisOffsets;
     for(const QString &group : groups) {
         groupAngles[group] = angle;
         axisOffsets[group] = 50;
@@ -326,7 +318,7 @@ void HiveWidget::calculate()
         // Create more prominent highlighting brush
         if (edge.isView) {
             QColor color(Qt::white);
-            color.setAlpha(lineAlpha);
+            color.setAlpha(lineAlpha / 2);
             edge.highlightBrush = QBrush(color);
         } else {
             QLinearGradient gradient(nodeX, nodeY, otherX, otherY);
@@ -341,26 +333,27 @@ void HiveWidget::calculate()
             edge.highlightBrush = QBrush(gradient);
         }
 
-        QPainterPath path;
-        path.moveTo(nodeX, nodeY);
-        path.quadTo(controlPoint, QPoint(otherX, otherY));
 
         // Draw an arrowhead
-        const double arrowSize = 15.;
+        const double arrowSize = 25.;
         const double sourceAngle = atan2(controlPoint.y() - otherY, controlPoint.x() - otherX);
-        double arrowAngle = sourceAngle - M_PI / 10;
+        double arrowAngle = sourceAngle - M_PI / 20;
         QPoint arrowHeadLeft = QPoint(otherX + cos(arrowAngle) * arrowSize,
                                       otherY + sin(arrowAngle) * arrowSize);
 
-        arrowAngle = sourceAngle + M_PI / 10;
+        arrowAngle = sourceAngle + M_PI / 20;
         QPoint arrowHeadRight = QPoint(otherX + cos(arrowAngle) * arrowSize,
                                        otherY + sin(arrowAngle) * arrowSize);
 
+        QPoint arrowHead = QPoint(cos(sourceAngle) * 5 + otherX, sin(sourceAngle) * 5 + otherY);
+        QPainterPath path;
+        path.moveTo(nodeX, nodeY);
+        path.quadTo(controlPoint, arrowHead);
         path = stroker.createStroke(path);
-        path.moveTo(otherX, otherY);
+        path.moveTo(arrowHead);
         path.lineTo(arrowHeadLeft);
         path.lineTo(arrowHeadRight);
-        path.lineTo(otherX, otherY);
+        path.lineTo(arrowHead);
 
         edge.path = path;
     }

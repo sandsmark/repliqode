@@ -47,6 +47,7 @@ protected:
 
 private:
     void calculate();
+    QString getClosest(int x, int y);
 
     QMap<QString, Node> m_nodes;
     QList<Edge> m_edges;
