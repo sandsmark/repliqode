@@ -19,8 +19,6 @@ Window::Window(QWidget *parent) : QWidget(parent),
     setLayout(new QVBoxLayout);
     layout()->addWidget(m_button);
     layout()->addWidget(m_hivePlot);
-    setWindowFlags(Qt::Dialog);
-    resize(1600, 1200);
 
     QSettings settings;
     QString lastImageFile = settings.value("lastimage").toString();
