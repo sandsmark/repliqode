@@ -28,7 +28,6 @@ Window::Window(QWidget *parent) : QWidget(parent),
 
     m_hivePlot->setNodes(m_replicode->getNodes());
     m_hivePlot->setEdges(m_replicode->getEdges());
-    m_hivePlot->setSource(m_replicode->getSourceCode());
     layout()->setContentsMargins(0, 0, 0, 0);
 }
 
@@ -46,7 +45,6 @@ void Window::buttonClicked()
     m_replicode->loadImage(filePath);
     m_hivePlot->setNodes(m_replicode->getNodes());
     m_hivePlot->setEdges(m_replicode->getEdges());
-    m_hivePlot->setSource(m_replicode->getSourceCode());
 }
 
 void Window::onReplicodeError(QString error)

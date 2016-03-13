@@ -14,9 +14,8 @@ public:
     explicit ReplicodeHandler(QObject *parent = 0);
     ~ReplicodeHandler();
 
-    const QMultiMap<QString, QString> &getNodes() { return m_nodes; }
+    const QMap<QString, Node> &getNodes() { return m_nodes; }
     const QList<Edge> &getEdges() { return m_edges; }
-    const QMap<QString, QTextDocument*> getSourceCode() { return m_sourceCode; }
 
     void loadImage(QString file);
 
@@ -27,10 +26,8 @@ private:
     r_comp::Image *m_image;
     r_comp::Metadata *m_metadata;
     r_comp::Decompiler *m_decompiler;
-    QMultiMap<QString, QString> m_nodes;
+    QMap<QString, Node> m_nodes;
     QList<Edge> m_edges;
-    QMap<QString, QTextDocument*> m_sourceCode;
-
 };
 
 #endif // REPLICODEHANDLER_H

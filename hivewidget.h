@@ -4,6 +4,16 @@
 #include <QOpenGLWidget>
 #include <QMultiMap>
 #include <QTextDocument>
+#include <memory>
+
+struct Node {
+    QString group;
+    QString subgroup;
+    std::shared_ptr<QTextDocument> sourcecode;
+
+    QColor color;
+    int x, y;
+};
 
 struct Edge {
     bool isView = false;
@@ -26,10 +36,8 @@ public:
     HiveWidget(QWidget *parent = 0);
     ~HiveWidget();
 
-    void setNodes(const QMultiMap<QString, QString> &nodes);
+    void setNodes(const QMap<QString, Node> &nodes);
     void setEdges(const QList<Edge> &edges);
-
-    void setSource(const QMap<QString, QTextDocument*> sourcecode);
 
 protected:
     virtual void paintEvent(QPaintEvent *) override;
@@ -40,18 +48,15 @@ protected:
 private:
     void calculate();
 
-    QMultiMap<QString, QString> m_nodes;
+    QMap<QString, Node> m_nodes;
     QList<Edge> m_edges;
 
-    QMap<QString, QColor> m_nodeColors;
     QMap<QString, QColor> m_groupColors;
-    QMap<QString, QPoint> m_positions;
     QString m_closest;
     QString m_clicked;
     double m_axisLength;
     bool m_scaleEdgeMax;
     bool m_scaleAxis;
-    QMap<QString, QTextDocument*> m_sourcecode;
 };
 
 #endif // HIVEWIDGET_H

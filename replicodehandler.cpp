@@ -39,7 +39,6 @@ void ReplicodeHandler::loadImage(QString file)
 
     m_nodes.clear();
     m_edges.clear();
-    m_sourceCode.clear();
 
     m_metadata = new r_comp::Metadata;
     m_image = new r_comp::Image;
@@ -98,19 +97,17 @@ void ReplicodeHandler::loadImage(QString file)
             group = "passive";
         } else {
             qDebug() << "Uncategorized object class" << nodeName << type;
-//            group = "objects";
             continue;
         }
 
-        if (m_nodes.contains(group, nodeName)) {
-            // Overwrite
-            m_nodes.remove(group, nodeName);
-        }
+        Node node;
+        node.group = group;
+        node.subgroup = type;
 
-        m_nodes.insert(group, nodeName);
         QTextDocument *sourceDoc = new QTextDocument(QString::fromStdString(source.str()));
         new ReplicodeHighlighter(sourceDoc);
-        m_sourceCode.insert(nodeName, sourceDoc);
+        node.sourcecode = std::shared_ptr<QTextDocument>(sourceDoc);
+        m_nodes.insert(nodeName, node);
 
         r_code::SysObject *imageObject = m_image->code_segment.objects[i];
         for (size_t j=0; j<imageObject->views.size(); j++) {
