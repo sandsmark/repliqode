@@ -8,7 +8,10 @@ QT       += core gui widgets
 
 LIBS +=  -lr_code -lr_comp -lr_exec
 
-TARGET = qhiveplot
+# Hack to get QtCreator to pick it up
+INCLUDEPATH += $$(INCLUDEPATH)
+
+TARGET = repliqode
 TEMPLATE = app
 
 CONFIG += c++11
