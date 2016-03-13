@@ -6,7 +6,7 @@
 int main(int argc, char *argv[])
 {
     QApplication application(argc, argv);
-    application.setApplicationName("qhiveplot");
+    application.setApplicationName("repliqode");
     application.setOrganizationDomain("nous.ai");
 
     // Invert the palette, for reasons
