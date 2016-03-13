@@ -42,6 +42,10 @@ void HiveWidget::paintEvent(QPaintEvent *)
     painter.setRenderHint(QPainter::Antialiasing);
     painter.fillRect(rect(), Qt::black);
 
+    // Draw center
+    painter.setPen(QPen(Qt::white, 3));
+    painter.drawPoint(width() / 2, height() / 2);
+
     if (m_nodes.isEmpty() || m_edges.isEmpty()) {
         return;
     }
@@ -98,17 +102,19 @@ void HiveWidget::paintEvent(QPaintEvent *)
             if (edge.isView) {
                 color = QColor(Qt::white);
             } else {
-                color = m_nodes.value(edge.source).color;//m_nodeColors[edge.source];
+                color = m_nodes.value(edge.source).color;
             }
             color.setAlpha(192);
             painter.setBrush(color);
             painter.drawPath(edge.path);
+            painter.drawPolygon(edge.arrowhead);
         }
 
         // Draw twice, for subtle highlight
         if (edge.target == m_closest) {
             painter.setBrush(edge.highlightBrush);
             painter.drawPath(edge.path);
+            painter.drawPolygon(edge.arrowhead);
         }
     }
 
@@ -199,14 +205,18 @@ void HiveWidget::calculate()
         return;
     }
 
-    QSet<QString> groups;
-    QSet<QString> subgroups;
+    QSet<QString> groupSet;
+    QSet<QString> subgroupSet;
     QMap<QString, int> groupNumElements;
     for (const Node &node : m_nodes.values()) {
-        groups.insert(node.group);
-        subgroups.insert(node.subgroup);
+        groupSet.insert(node.group);
+        subgroupSet.insert(node.subgroup);
         groupNumElements[node.group]++;
     }
+    QStringList groups = groupSet.toList();
+    qSort(groups);
+    QStringList subgroups = subgroupSet.toList();
+    qSort(subgroups);
 
     QList<int> groupCounts = groupNumElements.values();
     int maxGroupSize = *std::max_element(groupCounts.begin(), groupCounts.end());
@@ -219,28 +229,12 @@ void HiveWidget::calculate()
         hue += hueStep;
     }
 
-    // Find the optimal scale/axis length
-
+    // Calculate some angles
     const int cx = width() / 2;
-    const int cy = height() / 2;
+    const int cy = 2 * height() / 3;
     const double angleStep = (M_PI * 2) / groups.count();
-    double angle = M_PI/4;
-    m_axisLength = (qMin(width(), height())) / 2;
-    for (int i=0; i<groups.count(); i++) {
-        if (angle > M_PI) {
-            angle -= M_PI;
-        }
-        if (angle < M_PI / 2) {
-            m_axisLength = qMin(m_axisLength, cx / cos(angle));
-        } else {
-            m_axisLength = qMin(m_axisLength, cy / cos(angle - M_PI));
-        }
-        angle += angleStep;
-    }
-    m_axisLength -= 50;
-
-    // Calculate the angles between the axes, initialize the offsets of the nodes
-    angle = M_PI/4;
+    const double axisLength = height() / 1.5 - 50;
+    double angle = M_PI / 6;
     QHash<QString, double> groupAngles;
     QHash<QString, double> axisOffsets;
     for(const QString &group : groups) {
@@ -251,17 +245,18 @@ void HiveWidget::calculate()
 
     for (const QString &nodeName : m_nodes.keys()) {
         Node &node = m_nodes[nodeName];
-        double offsetStep;
-        if (m_scaleAxis) {
-            offsetStep = m_axisLength / (groupNumElements.value(node.group) + 1);
-        } else {
-            offsetStep = (m_axisLength - 100) / maxGroupSize;
-        }
-        axisOffsets[node.group] += offsetStep;
 
         node.x = cos(groupAngles[node.group]) * axisOffsets[node.group] + cx;
         node.y = sin(groupAngles[node.group]) * axisOffsets[node.group] + cy;
         node.color = m_groupColors.value(node.subgroup);
+
+        double offsetStep;
+        if (m_scaleAxis) {
+            offsetStep = axisLength / (groupNumElements.value(node.group) + 1);
+        } else {
+            offsetStep = (axisLength - 100) / maxGroupSize;
+        }
+        axisOffsets[node.group] += offsetStep;
     }
 
     QPainterPathStroker stroker;
@@ -283,9 +278,9 @@ void HiveWidget::calculate()
         double averageRadians = atan2(((nodeY - cy) + (otherY - cy))/2, ((nodeX - cx) + (otherX - cx))/2);
 
         if (groupAngles[edge.source] == groupAngles[edge.target]) {
-            averageRadians += (magnitude - otherMagnitude) / m_axisLength;
+            averageRadians += (magnitude - otherMagnitude) / axisLength;
         } else if (fmod(groupAngles[edge.source], M_PI) == fmod(groupAngles[edge.target], M_PI)) {
-            averageRadians += (magnitude - otherMagnitude) / m_axisLength;
+            averageRadians += (magnitude - otherMagnitude) / axisLength;
         }
 
         double averageMagnitude;
@@ -333,10 +328,15 @@ void HiveWidget::calculate()
             edge.highlightBrush = QBrush(gradient);
         }
 
+        const double sourceAngle = atan2(controlPoint.y() - otherY, controlPoint.x() - otherX);
+        QPoint endPoint = QPoint(cos(sourceAngle) * 5 + otherX, sin(sourceAngle) * 5 + otherY);
+        QPainterPath path;
+        path.moveTo(nodeX, nodeY);
+        path.quadTo(controlPoint, QPoint(otherX, otherY));
+        edge.path = stroker.createStroke(path);
 
         // Draw an arrowhead
         const double arrowSize = 25.;
-        const double sourceAngle = atan2(controlPoint.y() - otherY, controlPoint.x() - otherX);
         double arrowAngle = sourceAngle - M_PI / 20;
         QPoint arrowHeadLeft = QPoint(otherX + cos(arrowAngle) * arrowSize,
                                       otherY + sin(arrowAngle) * arrowSize);
@@ -345,17 +345,8 @@ void HiveWidget::calculate()
         QPoint arrowHeadRight = QPoint(otherX + cos(arrowAngle) * arrowSize,
                                        otherY + sin(arrowAngle) * arrowSize);
 
-        QPoint arrowHead = QPoint(cos(sourceAngle) * 5 + otherX, sin(sourceAngle) * 5 + otherY);
-        QPainterPath path;
-        path.moveTo(nodeX, nodeY);
-        path.quadTo(controlPoint, arrowHead);
-        path = stroker.createStroke(path);
-        path.moveTo(arrowHead);
-        path.lineTo(arrowHeadLeft);
-        path.lineTo(arrowHeadRight);
-        path.lineTo(arrowHead);
-
-        edge.path = path;
+        edge.arrowhead = QPolygon();
+        edge.arrowhead << endPoint << arrowHeadLeft << arrowHeadRight;
     }
     qDebug() << "calculating took" << timer.restart() << "ms";
 }

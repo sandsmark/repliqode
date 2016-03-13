@@ -19,7 +19,9 @@ struct Edge {
     bool isView = false;
     QString source;
     QString target;
+
     QPainterPath path;
+    QPolygon arrowhead;
     QBrush brush;
     QBrush highlightBrush;
 
@@ -55,7 +57,6 @@ private:
     QMap<QString, QColor> m_groupColors;
     QString m_closest;
     QString m_clicked;
-    double m_axisLength;
     bool m_scaleEdgeMax;
     bool m_scaleAxis;
 };
