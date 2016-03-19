@@ -7,6 +7,8 @@ class HiveWidget;
 class ReplicodeHandler;
 class QPushButton;
 class QTextEdit;
+class QListWidget;
+class QListWidgetItem;
 
 class Window : public QWidget
 {
@@ -22,8 +24,11 @@ private slots:
     void onLoadSource();
     void onStop();
     void onReplicodeError(QString error);
+    void onGroupClicked(QListWidgetItem *item);
 
 private:
+    void loadNodes();
+
     HiveWidget *m_hivePlot;
     ReplicodeHandler *m_replicode;
     QPushButton *m_loadImageButton;
@@ -31,6 +36,8 @@ private:
     QPushButton *m_startButton;
     QPushButton *m_stopButton;
     QTextEdit *m_outputView;
+    QListWidget *m_groupList;
+    QStringList m_disabledGroups;
 };
 
 #endif // WINDOW_H

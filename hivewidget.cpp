@@ -35,6 +35,13 @@ void HiveWidget::setEdges(const QList<Edge> &edges)
     update();
 }
 
+void HiveWidget::setDisabledGroups(const QStringList &groups)
+{
+    m_disabledGroups = groups;
+    calculate();
+    update();
+}
+
 void HiveWidget::paintEvent(QPaintEvent *)
 {
     QElapsedTimer timer;
@@ -64,6 +71,9 @@ void HiveWidget::paintEvent(QPaintEvent *)
     const int textX = width() - maxWidth - 10;
     int textY = 20;
     for (const QString &groupName : m_groupColors.keys()) {
+        if (m_disabledGroups.contains(groupName)) {
+            continue;
+        }
         painter.setPen(m_groupColors.value(groupName));
         painter.drawText(textX, textY, groupName);
         textY += fontMetrics.height();
@@ -72,6 +82,9 @@ void HiveWidget::paintEvent(QPaintEvent *)
     // Draw underlying edges first
     painter.setPen(Qt::NoPen);
     for (const Edge &edge : m_edges) {
+        if (m_disabledGroups.contains(m_nodes[edge.source].subgroup) || m_disabledGroups.contains(m_nodes[edge.target].subgroup)) {
+            continue;
+        }
         if (edge.source == m_closest) {
             continue;
         }
@@ -89,6 +102,10 @@ void HiveWidget::paintEvent(QPaintEvent *)
 //    for (const Node &node : m_nodes.values()) {
     for (const QString &nodeName : m_nodes.keys()) {
         const Node &node = m_nodes.value(nodeName);
+        if (m_disabledGroups.contains(node.subgroup)) {
+            continue;
+        }
+
         QColor color(node.color);
         color.setAlpha(128);
         nodePen.setColor(color);
@@ -108,6 +125,9 @@ void HiveWidget::paintEvent(QPaintEvent *)
 
     // Draw active edges on top
     for (const Edge &edge : m_edges) {
+        if (m_disabledGroups.contains(m_nodes[edge.source].subgroup) || m_disabledGroups.contains(m_nodes[edge.target].subgroup)) {
+            continue;
+        }
         if (edge.source == m_closest) {
             QColor color;
             if (edge.isView) {
@@ -138,6 +158,9 @@ void HiveWidget::paintEvent(QPaintEvent *)
 
     // Draw text and highlight positions of related edges
     for (const Edge &edge : m_edges) {
+        if (m_disabledGroups.contains(m_nodes[edge.source].subgroup) || m_disabledGroups.contains(m_nodes[edge.target].subgroup)) {
+            continue;
+        }
         if (edge.source == m_closest) {
             const Node &node = m_nodes.value(edge.target);
             penColor.setAlpha(192);
@@ -166,6 +189,10 @@ QString HiveWidget::getClosest(int x, int y)
     double minDist = width();
     QString closest;
     for (const QString &nodeName : m_nodes.keys()) {
+        if (m_disabledGroups.contains(m_nodes[nodeName].subgroup)) {
+            continue;
+        }
+
         int nodeX = m_nodes.value(nodeName).x;
         int nodeY = m_nodes.value(nodeName).y;
         double dist = hypot(x - nodeX, y - nodeY);
@@ -218,6 +245,10 @@ void HiveWidget::calculate()
     QSet<QString> subgroupSet;
     QMap<QString, int> groupNumElements;
     for (const Node &node : m_nodes.values()) {
+        if (m_disabledGroups.contains(node.subgroup)) {
+            continue;
+        }
+
         groupSet.insert(node.group);
         subgroupSet.insert(node.subgroup);
         groupNumElements[node.group]++;
@@ -254,6 +285,9 @@ void HiveWidget::calculate()
 
     for (const QString &nodeName : m_nodes.keys()) {
         Node &node = m_nodes[nodeName];
+        if (m_disabledGroups.contains(node.subgroup)) {
+            continue;
+        }
 
         node.x = cos(groupAngles[node.group]) * axisOffsets[node.group] + cx;
         node.y = sin(groupAngles[node.group]) * axisOffsets[node.group] + cy;
@@ -276,6 +310,9 @@ void HiveWidget::calculate()
     for (Edge &edge : m_edges) {
         const Node &node = m_nodes.value(edge.source);
         const Node &otherNode = m_nodes.value(edge.target);
+        if (m_disabledGroups.contains(node.subgroup) || m_disabledGroups.contains(otherNode.subgroup)) {
+            continue;
+        }
 
         const double nodeX = node.x;
         const double nodeY = node.y;

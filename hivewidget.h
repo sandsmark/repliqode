@@ -40,6 +40,7 @@ public:
 
     void setNodes(const QMap<QString, Node> &nodes);
     void setEdges(const QList<Edge> &edges);
+    void setDisabledGroups(const QStringList &groups);
 
 protected:
     virtual void paintEvent(QPaintEvent *) override;
@@ -60,6 +61,7 @@ private:
     bool m_scaleEdgeMax;
     bool m_scaleAxis;
     int m_fps;
+    QStringList m_disabledGroups;
 };
 
 #endif // HIVEWIDGET_H

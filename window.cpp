@@ -9,7 +9,7 @@
 #include <QSettings>
 #include <QFile>
 #include <QTextEdit>
-
+#include <QListWidget>
 
 Window::Window(QWidget *parent) : QWidget(parent),
     m_hivePlot(new HiveWidget(this)),
@@ -18,13 +18,15 @@ Window::Window(QWidget *parent) : QWidget(parent),
     m_loadSourceButton(new QPushButton("Load source...", this)),
     m_startButton(new QPushButton("Start", this)),
     m_stopButton(new QPushButton("Stop", this)),
-    m_outputView(new QTextEdit)
+    m_outputView(new QTextEdit),
+    m_groupList(new QListWidget)
 {
     connect(m_replicode, &ReplicodeHandler::error, this, &Window::onReplicodeError);
     connect(m_loadImageButton, &QPushButton::clicked, this, &Window::onLoadImage);
     connect(m_loadSourceButton, &QPushButton::clicked, this, &Window::onLoadSource);
     connect(m_startButton, &QPushButton::clicked, m_replicode, &ReplicodeHandler::start);
     connect(m_stopButton, &QPushButton::clicked, this, &Window::onStop);
+    connect(m_groupList, &QListWidget::itemChanged, this, &Window::onGroupClicked);
 
     QHBoxLayout *l = new QHBoxLayout;
     setLayout(l);
@@ -36,6 +38,7 @@ Window::Window(QWidget *parent) : QWidget(parent),
 
     rightWidget->layout()->addWidget(m_startButton);
     rightWidget->layout()->addWidget(m_stopButton);
+    rightWidget->layout()->addWidget(m_groupList);
     rightWidget->layout()->addWidget(m_outputView);
     rightWidget->layout()->addWidget(m_loadSourceButton);
     rightWidget->layout()->addWidget(m_loadImageButton);
@@ -47,8 +50,6 @@ Window::Window(QWidget *parent) : QWidget(parent),
 //        m_replicode->loadImage(lastImageFile);
 //    }
 
-    m_hivePlot->setNodes(m_replicode->getNodes());
-    m_hivePlot->setEdges(m_replicode->getEdges());
     layout()->setContentsMargins(0, 0, 0, 0);
 }
 
@@ -64,8 +65,7 @@ void Window::onLoadImage()
     settings.setValue("lastimage", filePath);
 
     m_replicode->loadImage(filePath);
-    m_hivePlot->setNodes(m_replicode->getNodes());
-    m_hivePlot->setEdges(m_replicode->getEdges());
+    loadNodes();
 }
 
 void Window::onLoadSource()
@@ -75,19 +75,52 @@ void Window::onLoadSource()
         return;
     }
     m_replicode->loadSource(filePath);
-    m_hivePlot->setNodes(m_replicode->getNodes());
-    m_hivePlot->setEdges(m_replicode->getEdges());
+    loadNodes();
 }
 
 void Window::onStop()
 {
     m_replicode->stop();
 
-    m_hivePlot->setNodes(m_replicode->getNodes());
-    m_hivePlot->setEdges(m_replicode->getEdges());
+    loadNodes();
 }
 
 void Window::onReplicodeError(QString error)
 {
     QMessageBox::warning(this, "Replicode error", error);
+}
+
+void Window::onGroupClicked(QListWidgetItem *item)
+{
+    if (item->checkState() == Qt::Unchecked && !m_disabledGroups.contains(item->text())) {
+        m_disabledGroups.append(item->text());
+        m_hivePlot->setDisabledGroups(m_disabledGroups);
+    } else if (item->checkState() == Qt::Checked && m_disabledGroups.contains(item->text())) {
+        m_disabledGroups.removeAll(item->text());
+        m_hivePlot->setDisabledGroups(m_disabledGroups);
+    }
+}
+
+void Window::loadNodes()
+{
+    const QMap<QString, Node> nodes = m_replicode->getNodes();
+    m_groupList->clear();
+
+    QSet<QString> subgroupSet;
+    for (const Node &node : nodes.values()) {
+        subgroupSet.insert(node.subgroup);
+    }
+
+    QStringList subgroups = subgroupSet.toList();
+    qSort(subgroups);
+    for (const QString group : subgroups) {
+        QListWidgetItem *item = new QListWidgetItem(group, m_groupList);
+        item->setFlags(item->flags() | Qt::ItemIsUserCheckable);
+        item->setCheckState(Qt::Checked);
+    }
+    m_disabledGroups.clear();
+
+    m_hivePlot->setDisabledGroups(m_disabledGroups);
+    m_hivePlot->setNodes(nodes);
+    m_hivePlot->setEdges(m_replicode->getEdges());
 }
