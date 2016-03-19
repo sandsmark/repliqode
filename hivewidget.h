@@ -59,6 +59,7 @@ private:
     QString m_clicked;
     bool m_scaleEdgeMax;
     bool m_scaleAxis;
+    int m_fps;
 };
 
 #endif // HIVEWIDGET_H

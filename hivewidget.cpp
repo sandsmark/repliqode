@@ -9,7 +9,8 @@
 HiveWidget::HiveWidget(QWidget *parent)
     : QOpenGLWidget(parent),
       m_scaleEdgeMax(false),
-      m_scaleAxis(true)
+      m_scaleAxis(true),
+      m_fps(0)
 {
     setMouseTracking(true);
 }
@@ -52,7 +53,12 @@ void HiveWidget::paintEvent(QPaintEvent *)
 
     QFontMetrics fontMetrics(font());
 
-    // Draw legend
+    // Show theoretical FPS.
+    // We only draw on demand, so this is approximately what we would get if running constantly.
+    QString fpsMessage = QString("%1 fps").arg(m_fps);
+    painter.drawText(width() - fontMetrics.width(fpsMessage), height() - fontMetrics.height() / 4, fpsMessage);
+
+    // Draw legend of node classes
     int maxWidth = 0;
     for (const QString &groupName : m_groupColors.keys()) {
         maxWidth = qMax(maxWidth, fontMetrics.width(groupName));
@@ -80,6 +86,9 @@ void HiveWidget::paintEvent(QPaintEvent *)
     }
 
     if (m_closest.isEmpty()) {
+        if (timer.elapsed() > 0) {
+            m_fps = 1000 / timer.elapsed();
+        }
         return;
     }
 
@@ -145,10 +154,8 @@ void HiveWidget::paintEvent(QPaintEvent *)
         m_nodes.value(m_closest).sourcecode->drawContents(&painter);
     }
 
-    // Theoretical but whatever
     if (timer.elapsed() > 0) {
-        QString fpsMessage = QString("%1 fps").arg(int(1000 / timer.elapsed()));
-        painter.drawText(width() - fontMetrics.width(fpsMessage), height() - fontMetrics.height() / 4, fpsMessage);
+        m_fps = 1000 / timer.elapsed();
     }
 }
 
@@ -348,5 +355,7 @@ void HiveWidget::calculate()
         edge.arrowhead = QPolygon();
         edge.arrowhead << endPoint << arrowHeadLeft << arrowHeadRight;
     }
-    qDebug() << "calculating took" << timer.restart() << "ms";
+    if (timer.elapsed() > 0) {
+        qDebug() << "calculating took" << timer.restart() << "ms";
+    }
 }
