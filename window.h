@@ -6,6 +6,7 @@
 class HiveWidget;
 class ReplicodeHandler;
 class QPushButton;
+class QTextEdit;
 
 class Window : public QWidget
 {
@@ -24,6 +25,7 @@ private:
     HiveWidget *m_hivePlot;
     ReplicodeHandler *m_replicode;
     QPushButton *m_button;
+    QTextEdit *m_outputView;
 };
 
 #endif // WINDOW_H

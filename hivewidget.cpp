@@ -12,6 +12,7 @@ HiveWidget::HiveWidget(QWidget *parent)
       m_scaleAxis(true),
       m_fps(0)
 {
+    setSizePolicy(QSizePolicy::MinimumExpanding, QSizePolicy::Preferred);
     setMouseTracking(true);
 }
 
@@ -51,6 +52,7 @@ void HiveWidget::paintEvent(QPaintEvent *)
         return;
     }
 
+    // For calculating sizes
     QFontMetrics fontMetrics(font());
 
     // Show theoretical FPS.

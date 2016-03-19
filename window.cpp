@@ -2,23 +2,34 @@
 #include "hivewidget.h"
 #include "replicodehandler.h"
 #include <QVBoxLayout>
+#include <QHBoxLayout>
 #include <QPushButton>
 #include <QFileDialog>
 #include <QMessageBox>
 #include <QSettings>
 #include <QFile>
+#include <QTextEdit>
 
 Window::Window(QWidget *parent) : QWidget(parent),
     m_hivePlot(new HiveWidget(this)),
     m_replicode(new ReplicodeHandler(this)),
-    m_button(new QPushButton("Load file...", this))
+    m_button(new QPushButton("Load file...", this)),
+    m_outputView(new QTextEdit)
 {
     connect(m_replicode, &ReplicodeHandler::error, this, &Window::onReplicodeError);
     connect(m_button, &QPushButton::clicked, this, &Window::buttonClicked);
 
-    setLayout(new QVBoxLayout);
-    layout()->addWidget(m_button);
-    layout()->addWidget(m_hivePlot);
+    QHBoxLayout *l = new QHBoxLayout;
+    setLayout(l);
+    l->addWidget(m_hivePlot, 3);
+
+    QWidget *rightWidget = new QWidget;
+    rightWidget->setLayout(new QVBoxLayout);
+    m_outputView->setReadOnly(true);
+
+    rightWidget->layout()->addWidget(m_outputView);
+    rightWidget->layout()->addWidget(m_button);
+    l->addWidget(rightWidget, 1);
 
     QSettings settings;
     QString lastImageFile = settings.value("lastimage").toString();

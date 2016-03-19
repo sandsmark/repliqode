@@ -23,11 +23,15 @@ signals:
     void error(QString error);
 
 private:
+    r_comp::Image m_seedImage;
+    r_comp::Metadata m_seedMetadata;
+
     r_comp::Image *m_image;
     r_comp::Metadata *m_metadata;
     r_comp::Decompiler *m_decompiler;
     QMap<QString, Node> m_nodes;
     QList<Edge> m_edges;
+    bool m_initSuccess;
 };
 
 #endif // REPLICODEHANDLER_H
