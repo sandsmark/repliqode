@@ -44,10 +44,6 @@ void HiveWidget::paintEvent(QPaintEvent *)
     painter.setRenderHint(QPainter::Antialiasing);
     painter.fillRect(rect(), Qt::black);
 
-    // Draw center
-    painter.setPen(QPen(Qt::white, 3));
-    painter.drawPoint(width() / 2, height() / 2);
-
     if (m_nodes.isEmpty() || m_edges.isEmpty()) {
         return;
     }
@@ -58,7 +54,7 @@ void HiveWidget::paintEvent(QPaintEvent *)
     // Show theoretical FPS.
     // We only draw on demand, so this is approximately what we would get if running constantly.
     QString fpsMessage = QString("%1 fps").arg(m_fps);
-    painter.drawText(width() - fontMetrics.width(fpsMessage), height() - fontMetrics.height() / 4, fpsMessage);
+    painter.drawText(width() - fontMetrics.width(fpsMessage) - 10, height() - fontMetrics.height() / 4, fpsMessage);
 
     // Draw legend of node classes
     int maxWidth = 0;
@@ -87,6 +83,21 @@ void HiveWidget::paintEvent(QPaintEvent *)
         painter.drawPath(edge.path);
     }
 
+    // Draw nodes
+    QPen nodePen;
+    nodePen.setWidth(5);
+//    for (const Node &node : m_nodes.values()) {
+    for (const QString &nodeName : m_nodes.keys()) {
+        const Node &node = m_nodes.value(nodeName);
+        QColor color(node.color);
+        color.setAlpha(128);
+        nodePen.setColor(color);
+        painter.setPen(nodePen);
+        painter.drawPoint(node.x, node.y);
+        painter.drawText(node.x, node.y, nodeName);
+    }
+    painter.setPen(Qt::NoPen);
+
     if (m_closest.isEmpty()) {
         if (timer.elapsed() > 0) {
             m_fps = 1000 / timer.elapsed();
@@ -94,17 +105,6 @@ void HiveWidget::paintEvent(QPaintEvent *)
         return;
     }
 
-    // Draw nodes
-    QPen nodePen;
-    nodePen.setWidth(5);
-    for (const Node &node : m_nodes.values()) {
-        QColor color(node.color);
-        color.setAlpha(128);
-        nodePen.setColor(color);
-        painter.setPen(nodePen);
-        painter.drawPoint(node.x, node.y);
-    }
-    painter.setPen(Qt::NoPen);
 
     // Draw active edges on top
     for (const Edge &edge : m_edges) {

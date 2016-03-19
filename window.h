@@ -18,13 +18,18 @@ signals:
 
 public slots:
 private slots:
-    void buttonClicked();
+    void onLoadImage();
+    void onLoadSource();
+    void onStop();
     void onReplicodeError(QString error);
 
 private:
     HiveWidget *m_hivePlot;
     ReplicodeHandler *m_replicode;
-    QPushButton *m_button;
+    QPushButton *m_loadImageButton;
+    QPushButton *m_loadSourceButton;
+    QPushButton *m_startButton;
+    QPushButton *m_stopButton;
     QTextEdit *m_outputView;
 };
 
