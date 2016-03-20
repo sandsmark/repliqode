@@ -145,6 +145,7 @@ void ReplicodeHandler::decompileImage(r_comp::Image *image)
         QString nodeName = QString::fromStdString(decompiler.get_object_name(i));
 
         QString type = QString::fromStdString(m_metadata->classes_by_opcodes[image->code_segment.objects[i]->code[0].asOpcode()].str_opcode);
+
         QString group;
         if (type.startsWith("mk.")) {
             group = "passive";
@@ -227,5 +228,13 @@ void ReplicodeHandler::stop()
         return;
     }
     m_mem->stop();
-    decompileImage(m_mem->get_objects());
+    if (!initialize()) {
+        emit error("Unable to initialize replicode");
+        return;
+    }
+
+    r_comp::Image *image = m_mem->get_objects();
+    // Ensure that we get proper names
+    image->object_names.symbols = m_image->object_names.symbols;
+    decompileImage(image);
 }
