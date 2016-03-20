@@ -2,6 +2,7 @@
 #define WINDOW_H
 
 #include <QWidget>
+#include "streamredirector.h"
 
 class HiveWidget;
 class ReplicodeHandler;
@@ -38,6 +39,8 @@ private:
     QTextEdit *m_outputView;
     QListWidget *m_groupList;
     QStringList m_disabledGroups;
+    StreamRedirector m_debugStream;
+    StreamRedirector m_errorStream;
 };
 
 #endif // WINDOW_H

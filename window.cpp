@@ -15,12 +15,28 @@ Window::Window(QWidget *parent) : QWidget(parent),
     m_hivePlot(new HiveWidget(this)),
     m_replicode(new ReplicodeHandler(this)),
     m_loadImageButton(new QPushButton("Load image...", this)),
-    m_loadSourceButton(new QPushButton("Load source...", this)),
-    m_startButton(new QPushButton("Start", this)),
-    m_stopButton(new QPushButton("Stop", this)),
+    m_loadSourceButton(new QPushButton("&Load source...", this)),
+    m_startButton(new QPushButton("&Start", this)),
+    m_stopButton(new QPushButton("S&top", this)),
     m_outputView(new QTextEdit),
-    m_groupList(new QListWidget)
+    m_groupList(new QListWidget),
+    m_debugStream(std::cout),
+    m_errorStream(std::cerr)
 {
+    connect(&m_debugStream, &StreamRedirector::stringOutput, this, [=](QString string) {
+            m_outputView->setTextColor(Qt::black);
+            m_outputView->insertPlainText(string);
+            m_outputView->ensureCursorVisible();
+        }, Qt::QueuedConnection);
+    connect(&m_errorStream, &StreamRedirector::stringOutput, this, [=](QString string) {
+            m_outputView->setTextColor(Qt::red);
+            m_outputView->insertPlainText(string);
+            m_outputView->ensureCursorVisible();
+        }, Qt::QueuedConnection);
+
+    QPushButton *clearButton = new QPushButton("Clear");
+    connect(clearButton, &QPushButton::clicked, m_outputView, &QTextEdit::clear);
+
     connect(m_replicode, &ReplicodeHandler::error, this, &Window::onReplicodeError);
     connect(m_loadImageButton, &QPushButton::clicked, this, &Window::onLoadImage);
     connect(m_loadSourceButton, &QPushButton::clicked, this, &Window::onLoadSource);
@@ -40,6 +56,7 @@ Window::Window(QWidget *parent) : QWidget(parent),
     rightWidget->layout()->addWidget(m_stopButton);
     rightWidget->layout()->addWidget(m_groupList);
     rightWidget->layout()->addWidget(m_outputView);
+    rightWidget->layout()->addWidget(clearButton);
     rightWidget->layout()->addWidget(m_loadSourceButton);
     rightWidget->layout()->addWidget(m_loadImageButton);
     l->addWidget(rightWidget, 1);

@@ -24,13 +24,15 @@ SOURCES += main.cpp \
     hivewidget.cpp \
     replicodehandler.cpp \
     window.cpp \
-    replicodehighlighter.cpp
+    replicodehighlighter.cpp \
+    streamredirector.cpp
 
 HEADERS  += \
     hivewidget.h \
     replicodehandler.h \
     window.h \
-    replicodehighlighter.h
+    replicodehighlighter.h \
+    streamredirector.h
 
 # Copy in some examples
 copydata.commands = $(COPY) \
