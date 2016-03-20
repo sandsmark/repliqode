@@ -14,7 +14,7 @@
 Window::Window(QWidget *parent) : QWidget(parent),
     m_hivePlot(new HiveWidget(this)),
     m_replicode(new ReplicodeHandler(this)),
-    m_loadImageButton(new QPushButton("Load image...", this)),
+    m_loadImageButton(new QPushButton("Load &image...", this)),
     m_loadSourceButton(new QPushButton("&Load source...", this)),
     m_startButton(new QPushButton("&Start", this)),
     m_stopButton(new QPushButton("S&top", this)),
