@@ -99,19 +99,20 @@ void HiveWidget::paintEvent(QPaintEvent *)
     // Draw nodes
     QPen nodePen;
     nodePen.setWidth(5);
-//    for (const Node &node : m_nodes.values()) {
-    for (const QString &nodeName : m_nodes.keys()) {
-        const Node &node = m_nodes.value(nodeName);
-        if (m_disabledGroups.contains(node.subgroup)) {
-            continue;
-        }
+    if (m_closest.isEmpty()) {
+        for (const QString &nodeName : m_nodes.keys()) {
+            const Node &node = m_nodes.value(nodeName);
+            if (m_disabledGroups.contains(node.subgroup)) {
+                continue;
+            }
 
-        QColor color(node.color);
-        color.setAlpha(128);
-        nodePen.setColor(color);
-        painter.setPen(nodePen);
-        painter.drawPoint(node.x, node.y);
-        painter.drawText(node.x, node.y, nodeName);
+            QColor color(node.color);
+            color.setAlpha(128);
+            nodePen.setColor(color);
+            painter.setPen(nodePen);
+            painter.drawPoint(node.x, node.y);
+            painter.drawText(node.x, node.y, nodeName);
+        }
     }
     painter.setPen(Qt::NoPen);
 
