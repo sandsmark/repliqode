@@ -19,6 +19,7 @@ ReplicodeHandler::ReplicodeHandler(QObject *parent) : QObject(parent),
     m_image(nullptr),
     m_metadata(nullptr)
 {
+    initialize();
 }
 
 ReplicodeHandler::~ReplicodeHandler()
@@ -34,8 +35,8 @@ void ReplicodeHandler::loadImage(QString file)
         return;
     }
 
-    if (!initialize()) {
-        emit error("Unable to initialize replicode");
+    if (!m_image) {
+        emit error("Replicode not initialized");
         return;
     }
 
@@ -49,10 +50,11 @@ void ReplicodeHandler::loadImage(QString file)
 
 void ReplicodeHandler::loadSource(QString file)
 {
-    if (!initialize()) {
-        emit error("Unable to initialize replicode");
+    if (!m_image) {
+        emit error("Replicode not initialized");
         return;
     }
+
 
     std::string errorString;
     if (!r_exec::Compile(file.toLocal8Bit().constData(),
@@ -141,6 +143,7 @@ void ReplicodeHandler::decompileImage(r_comp::Image *image)
 
     for (size_t i=0; i<objectCount; i++) {
         std::ostringstream source;
+        source.precision(2);
         decompiler.decompile_object(i, &source, 0);
         QString nodeName = QString::fromStdString(decompiler.get_object_name(i));
 
@@ -204,7 +207,6 @@ void ReplicodeHandler::decompileImage(r_comp::Image *image)
 
 bool ReplicodeHandler::initialize()
 {
-
     delete m_metadata;
     delete m_image;
 
@@ -228,13 +230,10 @@ void ReplicodeHandler::stop()
         return;
     }
     m_mem->stop();
-    if (!initialize()) {
-        emit error("Unable to initialize replicode");
-        return;
-    }
 
     r_comp::Image *image = m_mem->get_objects();
     // Ensure that we get proper names
     image->object_names.symbols = m_image->object_names.symbols;
     decompileImage(image);
+    delete image;
 }
