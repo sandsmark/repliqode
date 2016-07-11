@@ -23,8 +23,9 @@ Window::Window(QWidget *parent) : QWidget(parent),
     m_debugStream(std::cout),
     m_errorStream(std::cerr)
 {
+    m_textColor = palette().color(QPalette::Active, QPalette::ButtonText);
     connect(&m_debugStream, &StreamRedirector::stringOutput, this, [=](QString string) {
-            m_outputView->setTextColor(Qt::black);
+            m_outputView->setTextColor(m_textColor);
             m_outputView->insertPlainText(string);
             m_outputView->ensureCursorVisible();
         }, Qt::QueuedConnection);

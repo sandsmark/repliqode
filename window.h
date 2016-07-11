@@ -41,6 +41,7 @@ private:
     QStringList m_disabledGroups;
     StreamRedirector m_debugStream;
     StreamRedirector m_errorStream;
+    QColor m_textColor;
 };
 
 #endif // WINDOW_H
