@@ -24,6 +24,7 @@ HiveWidget::~HiveWidget()
 void HiveWidget::setNodes(const QMap<QString, Node> &nodes)
 {
     m_nodes = nodes;
+    m_disabledGroups.clear();
     calculate();
     update();
 }
@@ -31,13 +32,6 @@ void HiveWidget::setNodes(const QMap<QString, Node> &nodes)
 void HiveWidget::setEdges(const QList<Edge> &edges)
 {
     m_edges = edges;
-    calculate();
-    update();
-}
-
-void HiveWidget::setDisabledGroups(const QStringList &groups)
-{
-    m_disabledGroups = groups;
     calculate();
     update();
 }

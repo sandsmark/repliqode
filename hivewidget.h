@@ -41,7 +41,6 @@ public:
 
     void setNodes(const QMap<QString, Node> &nodes);
     void setEdges(const QList<Edge> &edges);
-    void setDisabledGroups(const QStringList &groups);
 
 protected:
     virtual void paintEvent(QPaintEvent *) override;

@@ -24,7 +24,6 @@ private slots:
     void onLoadSource();
     void onRunClicked(bool checked);
     void onReplicodeError(QString error);
-    void onGroupClicked(QListWidgetItem *item);
 
 private:
     void loadNodes();
@@ -35,8 +34,6 @@ private:
     QPushButton *m_loadSourceButton;
     QPushButton *m_runButton;
     QTextEdit *m_outputView;
-    QListWidget *m_groupList;
-    QStringList m_disabledGroups;
     StreamRedirector m_debugStream;
     StreamRedirector m_errorStream;
     QColor m_textColor;

@@ -19,7 +19,6 @@ Window::Window(QWidget *parent) : QWidget(parent),
     m_loadSourceButton(new QPushButton("&Load source...", this)),
     m_runButton(new QPushButton("&Run", this)),
     m_outputView(new QTextEdit),
-    m_groupList(new QListWidget),
     m_debugStream(std::cout),
     m_errorStream(std::cerr)
 {
@@ -43,7 +42,6 @@ Window::Window(QWidget *parent) : QWidget(parent),
     connect(m_loadImageButton, &QPushButton::clicked, this, &Window::onLoadImage);
     connect(m_loadSourceButton, &QPushButton::clicked, this, &Window::onLoadSource);
     connect(m_runButton, &QPushButton::clicked, this, &Window::onRunClicked);
-    connect(m_groupList, &QListWidget::itemChanged, this, &Window::onGroupClicked);
 
     QHBoxLayout *l = new QHBoxLayout;
     setLayout(l);
@@ -53,7 +51,6 @@ Window::Window(QWidget *parent) : QWidget(parent),
     m_outputView->setReadOnly(true);
 
     rightLayout->addWidget(m_runButton);
-    rightLayout->addWidget(m_groupList);
     rightLayout->addWidget(m_outputView);
     rightLayout->addWidget(clearButton);
     rightLayout->addSpacing(m_runButton->height());
@@ -119,37 +116,10 @@ void Window::onReplicodeError(QString error)
     QMessageBox::warning(this, "Replicode error", error);
 }
 
-void Window::onGroupClicked(QListWidgetItem *item)
-{
-    if (item->checkState() == Qt::Unchecked && !m_disabledGroups.contains(item->text())) {
-        m_disabledGroups.append(item->text());
-        m_hivePlot->setDisabledGroups(m_disabledGroups);
-    } else if (item->checkState() == Qt::Checked && m_disabledGroups.contains(item->text())) {
-        m_disabledGroups.removeAll(item->text());
-        m_hivePlot->setDisabledGroups(m_disabledGroups);
-    }
-}
-
 void Window::loadNodes()
 {
     const QMap<QString, Node> nodes = m_replicode->getNodes();
-    m_groupList->clear();
 
-    QSet<QString> subgroupSet;
-    for (const Node &node : nodes.values()) {
-        subgroupSet.insert(node.subgroup);
-    }
-
-    QStringList subgroups = subgroupSet.toList();
-    qSort(subgroups);
-    for (const QString group : subgroups) {
-        QListWidgetItem *item = new QListWidgetItem(group, m_groupList);
-        item->setFlags(item->flags() | Qt::ItemIsUserCheckable);
-        item->setCheckState(Qt::Checked);
-    }
-    m_disabledGroups.clear();
-
-    m_hivePlot->setDisabledGroups(m_disabledGroups);
     m_hivePlot->setNodes(nodes);
     m_hivePlot->setEdges(m_replicode->getEdges());
 }
