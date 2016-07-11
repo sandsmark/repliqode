@@ -57,7 +57,8 @@ private:
     QList<Edge> m_edges;
 
     QMap<QString, QColor> m_groupColors;
-    QMap<QString, QPoint> m_groupPositions;
+    QMap<QString, int> m_groupYPositions;
+    int m_groupsXOffset;
     QString m_closest;
     QString m_clicked;
     bool m_scaleEdgeMax;

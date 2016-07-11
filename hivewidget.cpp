@@ -59,13 +59,19 @@ void HiveWidget::paintEvent(QPaintEvent *)
     QString fpsMessage = QString("%1 ms rendertime").arg(m_renderTime);
     painter.drawText(width() - fontMetrics.width(fpsMessage) - 10, height() - fontMetrics.height() / 4, fpsMessage);
 
+    QRect groupRect;
+    groupRect.moveRight(m_groupsXOffset);
+    groupRect.setHeight(fontMetrics.height());
+    groupRect.setWidth(width() - m_groupsXOffset);
+
     for (const QString &groupName : m_groupColors.keys()) {
         if (m_disabledGroups.contains(groupName)) {
             painter.setPen(Qt::gray);
         } else {
             painter.setPen(m_groupColors.value(groupName));
         }
-        painter.drawText(m_groupPositions[groupName], groupName);
+        painter.drawText(groupRect, Qt::AlignVCenter | Qt::AlignLeft, groupName);
+        groupRect.moveTop(m_groupYPositions.value(groupName));
     }
 
     // Draw underlying edges first
@@ -204,6 +210,27 @@ void HiveWidget::mouseMoveEvent(QMouseEvent *event)
 
 void HiveWidget::mousePressEvent(QMouseEvent *event)
 {
+    // Check if clicked on group
+    QFontMetrics fontMetrics(font());
+    QRect groupRect;
+    groupRect.moveRight(m_groupsXOffset);
+    groupRect.setHeight(fontMetrics.height());
+    groupRect.setWidth(width() - m_groupsXOffset);
+    for (const QString &groupName : m_groupYPositions.keys()) {
+        if (groupRect.contains(event->pos())) {
+            if (m_disabledGroups.contains(groupName)) {
+                m_disabledGroups.removeAll(groupName);
+            } else {
+                m_disabledGroups.append(groupName);
+            }
+            calculate();
+            update();
+            return;
+        }
+        groupRect.moveTop(m_groupYPositions.value(groupName));
+    }
+
+
     QString clicked = getClosest(event->x(), event->y());
     if (clicked != m_clicked) {
         m_clicked = clicked;
@@ -227,25 +254,16 @@ void HiveWidget::calculate()
         return;
     }
 
-    // For calculating group legend positions
-    QFontMetrics fontMetrics(font());
-    int maxWidth = 0;
-
     // Get all groups and subgroups
     QSet<QString> groupSet;
     QSet<QString> subgroupSet;
     QMap<QString, int> groupNumElements;
     for (const Node &node : m_nodes.values()) {
-        if (m_disabledGroups.contains(node.subgroup)) {
-            continue;
-        }
-
         groupSet.insert(node.group);
         subgroupSet.insert(node.subgroup);
         groupNumElements[node.group]++;
-
-        maxWidth = qMax(maxWidth, fontMetrics.width(node.subgroup));
     }
+
     QStringList groups = groupSet.toList();
     qSort(groups);
     QStringList subgroups = subgroupSet.toList();
@@ -255,17 +273,23 @@ void HiveWidget::calculate()
     int maxGroupSize = *std::max_element(groupCounts.begin(), groupCounts.end());
 
 
-    const int textX = width() - maxWidth - 10;
+    // For calculating group legend positions
+    QFontMetrics fontMetrics(font());
+    int maxWidth = 0;
     int textY = 20;
+
     // Automatically generate some colors
     const int hueStep = 359 / subgroups.count();
     int hue = 0;
     for(const QString &subgroup : subgroups) {
+        maxWidth = qMax(maxWidth, fontMetrics.width(subgroup));
+        m_groupYPositions.insert(subgroup, textY);
+        textY += fontMetrics.height();
+
         m_groupColors.insert(subgroup, QColor::fromHsv(hue, 128, 255));
         hue += hueStep;
-        m_groupPositions.insert(subgroup, QPoint(textX, textY));
-        textY += fontMetrics.height();
     }
+    m_groupsXOffset = width() - maxWidth;
 
     // Calculate some angles
     const int cx = width() / 2;
