@@ -3,10 +3,15 @@
 
 #include <QObject>
 #include <QTextDocument>
-#include <r_exec/mem.h>
-#include <r_comp/segments.h>
-#include <r_comp/decompiler.h>
 #include "hivewidget.h"
+
+namespace r_exec {
+class _Mem;
+}
+namespace r_comp {
+class Image;
+class Metadata;
+}
 
 class ReplicodeHandler : public QObject
 {

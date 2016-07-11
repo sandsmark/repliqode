@@ -10,6 +10,9 @@
 #include <r_exec/opcodes.h>
 #include <r_exec/object.h>
 #include <r_comp/segments.h>
+#include <r_exec/mem.h>
+#include <r_comp/segments.h>
+#include <r_comp/decompiler.h>
 #include <QDebug>
 #include <QSet>
 #include <QFile>
