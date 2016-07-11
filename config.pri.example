@@ -1,0 +1,5 @@
+QMAKE_CXXFLAGS += -isystem /home/sandsmark/src/replicode
+
+LIBS += -L/home/sandsmark/src/replicode/build/r_exec
+LIBS += -L/home/sandsmark/src/replicode/build/r_comp
+LIBS += -L/home/sandsmark/src/replicode/build/r_code

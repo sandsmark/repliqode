@@ -12,9 +12,6 @@ exists(config.pri) {
     include(config.pri)
 }
 
-# Hack to get QtCreator to pick it up
-INCLUDEPATH += $$(INCLUDEPATH)
-
 TARGET = repliqode
 TEMPLATE = app
 
