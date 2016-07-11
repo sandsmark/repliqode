@@ -222,6 +222,7 @@ bool testCallback(uint64_t time, bool suspended, const char *msg, uint8_t object
     for (uint8_t i = 0; i < object_count; ++i) {
         objects[i]->trace();
     }
+    return true;
 }
 
 bool ReplicodeHandler::initialize()
