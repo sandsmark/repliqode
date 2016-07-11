@@ -16,8 +16,7 @@ Window::Window(QWidget *parent) : QWidget(parent),
     m_replicode(new ReplicodeHandler(this)),
     m_loadImageButton(new QPushButton("Load &image...", this)),
     m_loadSourceButton(new QPushButton("&Load source...", this)),
-    m_startButton(new QPushButton("&Start", this)),
-    m_stopButton(new QPushButton("S&top", this)),
+    m_runButton(new QPushButton("&Run", this)),
     m_outputView(new QTextEdit),
     m_groupList(new QListWidget),
     m_debugStream(std::cout),
@@ -35,14 +34,14 @@ Window::Window(QWidget *parent) : QWidget(parent),
             m_outputView->ensureCursorVisible();
         }, Qt::QueuedConnection);
 
+    m_runButton->setCheckable(true);
     QPushButton *clearButton = new QPushButton("Clear");
     connect(clearButton, &QPushButton::clicked, m_outputView, &QTextEdit::clear);
 
     connect(m_replicode, &ReplicodeHandler::error, this, &Window::onReplicodeError);
     connect(m_loadImageButton, &QPushButton::clicked, this, &Window::onLoadImage);
     connect(m_loadSourceButton, &QPushButton::clicked, this, &Window::onLoadSource);
-    connect(m_startButton, &QPushButton::clicked, m_replicode, &ReplicodeHandler::start);
-    connect(m_stopButton, &QPushButton::clicked, this, &Window::onStop);
+    connect(m_runButton, &QPushButton::clicked, this, &Window::onRunClicked);
     connect(m_groupList, &QListWidget::itemChanged, this, &Window::onGroupClicked);
 
     QHBoxLayout *l = new QHBoxLayout;
@@ -53,8 +52,7 @@ Window::Window(QWidget *parent) : QWidget(parent),
     rightWidget->setLayout(new QVBoxLayout);
     m_outputView->setReadOnly(true);
 
-    rightWidget->layout()->addWidget(m_startButton);
-    rightWidget->layout()->addWidget(m_stopButton);
+    rightWidget->layout()->addWidget(m_runButton);
     rightWidget->layout()->addWidget(m_groupList);
     rightWidget->layout()->addWidget(m_outputView);
     rightWidget->layout()->addWidget(clearButton);
@@ -96,11 +94,20 @@ void Window::onLoadSource()
     loadNodes();
 }
 
-void Window::onStop()
+void Window::onRunClicked(bool checked)
 {
-    m_replicode->stop();
-
-    loadNodes();
+    if (checked) {
+        qDebug() << "Starting...";
+        if (!m_replicode->start()) {
+            m_runButton->setChecked(false);
+        }
+        m_runButton->setText("&Stop");
+    } else {
+        qDebug() << "Stopping...";
+        m_replicode->stop();
+        loadNodes();
+        m_runButton->setText("&Run");
+    }
 }
 
 void Window::onReplicodeError(QString error)

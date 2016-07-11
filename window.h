@@ -19,11 +19,10 @@ public:
 
 signals:
 
-public slots:
 private slots:
     void onLoadImage();
     void onLoadSource();
-    void onStop();
+    void onRunClicked(bool checked);
     void onReplicodeError(QString error);
     void onGroupClicked(QListWidgetItem *item);
 
@@ -34,8 +33,7 @@ private:
     ReplicodeHandler *m_replicode;
     QPushButton *m_loadImageButton;
     QPushButton *m_loadSourceButton;
-    QPushButton *m_startButton;
-    QPushButton *m_stopButton;
+    QPushButton *m_runButton;
     QTextEdit *m_outputView;
     QListWidget *m_groupList;
     QStringList m_disabledGroups;
