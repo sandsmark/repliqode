@@ -7,6 +7,7 @@
 #include <memory>
 
 struct Node {
+    QString displayName;
     QString group;
     QString subgroup;
     std::shared_ptr<QTextDocument> sourcecode;

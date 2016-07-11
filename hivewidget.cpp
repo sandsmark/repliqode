@@ -111,7 +111,7 @@ void HiveWidget::paintEvent(QPaintEvent *)
             nodePen.setColor(color);
             painter.setPen(nodePen);
             painter.drawPoint(node.x, node.y);
-            painter.drawText(node.x, node.y, nodeName);
+            painter.drawText(node.x, node.y, node.displayName);
         }
     }
     painter.setPen(Qt::NoPen);
@@ -155,7 +155,7 @@ void HiveWidget::paintEvent(QPaintEvent *)
     painter.setBrush(closest.color);
     painter.drawEllipse(closest.x - 5, closest.y - 5, 10, 10);
     painter.setPen(penColor);
-    painter.drawText(closest.x + 5, closest.y, m_closest);
+    painter.drawText(closest.x + 5, closest.y, closest.displayName);
 
     // Draw text and highlight positions of related edges
     for (const Edge &edge : m_edges) {
@@ -166,12 +166,12 @@ void HiveWidget::paintEvent(QPaintEvent *)
             const Node &node = m_nodes.value(edge.target);
             penColor.setAlpha(192);
             painter.setPen(penColor);
-            painter.drawText(node.x + 10, node.y + 5, edge.target);
+            painter.drawText(node.x + 10, node.y + 5, node.displayName);
         } else if (edge.target == m_closest) {
             const Node &node = m_nodes.value(edge.source);
             penColor.setAlpha(128);
             painter.setPen(penColor);
-            painter.drawText(node.x, node.y, edge.source);
+            painter.drawText(node.x, node.y, node.displayName);
         }
     }
 

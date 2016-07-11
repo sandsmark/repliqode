@@ -179,6 +179,11 @@ void ReplicodeHandler::decompileImage(r_comp::Image *image)
         node.group = group;
         node.subgroup = type;
 
+        node.displayName = nodeName;
+        if (!nodeName.contains(type)) {
+            node.displayName += " (" + type + ')';
+        }
+
         QTextDocument *sourceDoc = new QTextDocument(QString::fromStdString(source.str()));
         new ReplicodeHighlighter(sourceDoc);
         node.sourcecode = std::shared_ptr<QTextDocument>(sourceDoc);
