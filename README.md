@@ -4,7 +4,7 @@ Repliqode -- Replicode UI
 Not very complete yet, but allows you to load and run .replicode files, and
 tries to visualize the rmem.
 
-# Building
+## Building
 
 To build just open repliqode.pro in QtCreator, or run qmake && make manually
 from the command line. If you don't have replicode installed globally, copy the
