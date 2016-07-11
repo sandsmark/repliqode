@@ -10,6 +10,7 @@
 #include <QFile>
 #include <QTextEdit>
 #include <QListWidget>
+#include <QDebug>
 
 Window::Window(QWidget *parent) : QWidget(parent),
     m_hivePlot(new HiveWidget(this)),
@@ -60,12 +61,6 @@ Window::Window(QWidget *parent) : QWidget(parent),
     rightWidget->layout()->addWidget(m_loadImageButton);
     l->addWidget(rightWidget, 1);
 
-//    QSettings settings;
-//    QString lastImageFile = settings.value("lastimage").toString();
-//    if (QFile::exists(lastImageFile)) {
-//        m_replicode->loadImage(lastImageFile);
-//    }
-
     layout()->setContentsMargins(0, 0, 0, 0);
 }
 
@@ -82,16 +77,25 @@ void Window::onLoadImage()
 
     m_replicode->loadImage(filePath);
     loadNodes();
+
+    m_loadImageButton->setDisabled(true);
+    m_loadSourceButton->setDisabled(true);
 }
 
 void Window::onLoadSource()
 {
-    QString filePath = QFileDialog::getOpenFileName(this, "Select a source file", "", "*.replicode");
+    QSettings settings;
+    QString lastFile = settings.value("lastfile").toString();
+    QString filePath = QFileDialog::getOpenFileName(this, "Select a source file", lastFile, "*.replicode");
     if (!QFile::exists(filePath)) {
         return;
     }
+    settings.setValue("lastfile", filePath);
     m_replicode->loadSource(filePath);
     loadNodes();
+
+    m_loadImageButton->setDisabled(true);
+    m_loadSourceButton->setDisabled(true);
 }
 
 void Window::onRunClicked(bool checked)
