@@ -10,7 +10,7 @@ HiveWidget::HiveWidget(QWidget *parent)
     : QOpenGLWidget(parent),
       m_scaleEdgeMax(false),
       m_scaleAxis(true),
-      m_fps(0)
+      m_renderTime(0)
 {
     setSizePolicy(QSizePolicy::MinimumExpanding, QSizePolicy::Preferred);
     setMouseTracking(true);
@@ -60,7 +60,7 @@ void HiveWidget::paintEvent(QPaintEvent *)
 
     // Show theoretical FPS.
     // We only draw on demand, so this is approximately what we would get if running constantly.
-    QString fpsMessage = QString("%1 fps").arg(m_fps);
+    QString fpsMessage = QString("%1 ms rendertime").arg(m_renderTime);
     painter.drawText(width() - fontMetrics.width(fpsMessage) - 10, height() - fontMetrics.height() / 4, fpsMessage);
 
     // Draw legend of node classes
@@ -117,9 +117,7 @@ void HiveWidget::paintEvent(QPaintEvent *)
     painter.setPen(Qt::NoPen);
 
     if (m_closest.isEmpty()) {
-        if (timer.elapsed() > 0) {
-            m_fps = 1000 / timer.elapsed();
-        }
+        m_renderTime = timer.elapsed();
         return;
     }
 
@@ -180,9 +178,7 @@ void HiveWidget::paintEvent(QPaintEvent *)
         m_nodes.value(m_closest).sourcecode->drawContents(&painter);
     }
 
-    if (timer.elapsed() > 0) {
-        m_fps = 1000 / timer.elapsed();
-    }
+    m_renderTime = timer.elapsed();
 }
 
 QString HiveWidget::getClosest(int x, int y)
