@@ -58,8 +58,6 @@ void HiveWidget::paintEvent(QPaintEvent *)
     // For calculating sizes
     QFontMetrics fontMetrics(font());
 
-    // Show theoretical FPS.
-    // We only draw on demand, so this is approximately what we would get if running constantly.
     QString fpsMessage = QString("%1 ms rendertime").arg(m_renderTime);
     painter.drawText(width() - fontMetrics.width(fpsMessage) - 10, height() - fontMetrics.height() / 4, fpsMessage);
 
