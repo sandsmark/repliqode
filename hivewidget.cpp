@@ -72,9 +72,10 @@ void HiveWidget::paintEvent(QPaintEvent *)
     int textY = 20;
     for (const QString &groupName : m_groupColors.keys()) {
         if (m_disabledGroups.contains(groupName)) {
-            continue;
+            painter.setPen(Qt::gray);
+        } else {
+            painter.setPen(m_groupColors.value(groupName));
         }
-        painter.setPen(m_groupColors.value(groupName));
         painter.drawText(textX, textY, groupName);
         textY += fontMetrics.height();
     }
