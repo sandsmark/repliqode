@@ -56,6 +56,7 @@ Window::Window(QWidget *parent) : QWidget(parent),
     rightLayout->addWidget(m_groupList);
     rightLayout->addWidget(m_outputView);
     rightLayout->addWidget(clearButton);
+    rightLayout->addSpacing(m_runButton->height());
     rightLayout->addWidget(m_loadSourceButton);
     rightLayout->addWidget(m_loadImageButton);
     l->addLayout(rightLayout, 1);
