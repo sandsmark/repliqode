@@ -49,17 +49,16 @@ Window::Window(QWidget *parent) : QWidget(parent),
     setLayout(l);
     l->addWidget(m_hivePlot, 3);
 
-    QWidget *rightWidget = new QWidget;
-    rightWidget->setLayout(new QVBoxLayout);
+    QVBoxLayout *rightLayout = new QVBoxLayout;
     m_outputView->setReadOnly(true);
 
-    rightWidget->layout()->addWidget(m_runButton);
-    rightWidget->layout()->addWidget(m_groupList);
-    rightWidget->layout()->addWidget(m_outputView);
-    rightWidget->layout()->addWidget(clearButton);
-    rightWidget->layout()->addWidget(m_loadSourceButton);
-    rightWidget->layout()->addWidget(m_loadImageButton);
-    l->addWidget(rightWidget, 1);
+    rightLayout->addWidget(m_runButton);
+    rightLayout->addWidget(m_groupList);
+    rightLayout->addWidget(m_outputView);
+    rightLayout->addWidget(clearButton);
+    rightLayout->addWidget(m_loadSourceButton);
+    rightLayout->addWidget(m_loadImageButton);
+    l->addLayout(rightLayout, 1);
 
     layout()->setContentsMargins(0, 0, 0, 0);
 }
