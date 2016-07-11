@@ -9,6 +9,7 @@
 #include <r_exec/init.h>
 #include <r_exec/opcodes.h>
 #include <r_exec/object.h>
+#include <r_exec/callbacks.h>           // for Callbacks
 #include <r_comp/segments.h>
 #include <r_exec/mem.h>
 #include <r_comp/segments.h>
@@ -212,7 +213,15 @@ void ReplicodeHandler::decompileImage(r_comp::Image *image)
             m_edges.append(edge);
         }
     }
+}
 
+bool testCallback(uint64_t time, bool suspended, const char *msg, uint8_t object_count, r_code::Code **objects)
+{
+    std::cout << DebugStream::timestamp(time) << ": " << msg << std::endl;
+
+    for (uint8_t i = 0; i < object_count; ++i) {
+        objects[i]->trace();
+    }
 }
 
 bool ReplicodeHandler::initialize()
@@ -232,6 +241,8 @@ bool ReplicodeHandler::initialize()
                         m_image,
                         m_metadata
                         );
+
+    r_exec::Callbacks::Register(std::string("test"), testCallback);
 }
 
 void ReplicodeHandler::stop()
