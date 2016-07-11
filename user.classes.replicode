@@ -8,6 +8,7 @@
 
 ; domain-dependent classes.
 
+!class (vec2 x:nb y:nb)
 !class (vec3 x:nb y:nb z:nb)
 !class (speech_context (_obj {speaker:ent listener:ent}))
 
