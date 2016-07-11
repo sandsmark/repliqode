@@ -23,7 +23,7 @@ public:
     void stop();
 
 public slots:
-    void start();
+    bool start();
 
 signals:
     void error(QString error);

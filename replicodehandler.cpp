@@ -122,13 +122,15 @@ void ReplicodeHandler::loadSource(QString file)
     }
 }
 
-void ReplicodeHandler::start()
+bool ReplicodeHandler::start()
 {
     if (!m_mem) {
-        return;
+        return false;
     }
 
-    m_mem->start();
+    uint64_t startTime = m_mem->start();
+
+    return (startTime != 0);
 }
 
 void ReplicodeHandler::decompileImage(r_comp::Image *image)
