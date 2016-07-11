@@ -43,3 +43,5 @@ copydata.commands = $(COPY) \
                     $$OUT_PWD
 first.depends = $(first) copydata
 QMAKE_EXTRA_TARGETS += first copydata
+
+DISTFILES += user.classes.replicode std.replicode
