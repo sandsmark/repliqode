@@ -55,27 +55,17 @@ void HiveWidget::paintEvent(QPaintEvent *)
         return;
     }
 
-    // For calculating sizes
     QFontMetrics fontMetrics(font());
-
     QString fpsMessage = QString("%1 ms rendertime").arg(m_renderTime);
     painter.drawText(width() - fontMetrics.width(fpsMessage) - 10, height() - fontMetrics.height() / 4, fpsMessage);
 
-    // Draw legend of node classes
-    int maxWidth = 0;
-    for (const QString &groupName : m_groupColors.keys()) {
-        maxWidth = qMax(maxWidth, fontMetrics.width(groupName));
-    }
-    const int textX = width() - maxWidth - 10;
-    int textY = 20;
     for (const QString &groupName : m_groupColors.keys()) {
         if (m_disabledGroups.contains(groupName)) {
             painter.setPen(Qt::gray);
         } else {
             painter.setPen(m_groupColors.value(groupName));
         }
-        painter.drawText(textX, textY, groupName);
-        textY += fontMetrics.height();
+        painter.drawText(m_groupPositions[groupName], groupName);
     }
 
     // Draw underlying edges first
@@ -237,6 +227,11 @@ void HiveWidget::calculate()
         return;
     }
 
+    // For calculating group legend positions
+    QFontMetrics fontMetrics(font());
+    int maxWidth = 0;
+
+    // Get all groups and subgroups
     QSet<QString> groupSet;
     QSet<QString> subgroupSet;
     QMap<QString, int> groupNumElements;
@@ -248,6 +243,8 @@ void HiveWidget::calculate()
         groupSet.insert(node.group);
         subgroupSet.insert(node.subgroup);
         groupNumElements[node.group]++;
+
+        maxWidth = qMax(maxWidth, fontMetrics.width(node.subgroup));
     }
     QStringList groups = groupSet.toList();
     qSort(groups);
@@ -257,12 +254,17 @@ void HiveWidget::calculate()
     QList<int> groupCounts = groupNumElements.values();
     int maxGroupSize = *std::max_element(groupCounts.begin(), groupCounts.end());
 
+
+    const int textX = width() - maxWidth - 10;
+    int textY = 20;
     // Automatically generate some colors
     const int hueStep = 359 / subgroups.count();
     int hue = 0;
     for(const QString &subgroup : subgroups) {
         m_groupColors.insert(subgroup, QColor::fromHsv(hue, 128, 255));
         hue += hueStep;
+        m_groupPositions.insert(subgroup, QPoint(textX, textY));
+        textY += fontMetrics.height();
     }
 
     // Calculate some angles
