@@ -1,6 +1,8 @@
 Repliqode -- Replicode UI
 =========================
 
+![screenshot](/doc/screenshot.png)
+
 Not very complete yet, but allows you to load and run .replicode files, and
 tries to visualize the rmem.
 
