@@ -110,7 +110,7 @@ void ReplicodeHandler::loadSource(QString file)
     std::string self_symbol("self");
     std::unordered_map<uintptr_t, std::string>::const_iterator n;
 
-    for (const auto symbol : m_image->object_names.symbols) {
+    for (const std::pair<const uint32_t, std::string> &symbol : m_image->object_names.symbols) {
         if (symbol.second == stdin_symbol) {
             stdin_oid = symbol.first;
         } else if (symbol.second == stdout_symbol) {
@@ -217,7 +217,7 @@ void ReplicodeHandler::decompileImage(r_comp::Image *image)
 
 bool testCallback(uint64_t time, bool suspended, const char *msg, uint8_t object_count, r_code::Code **objects)
 {
-    std::cout << DebugStream::timestamp(time) << ": " << msg << std::endl;
+    std::cout << DebugStream::timestamp(time) << ": " << msg << (suspended ? " (suspended)" : "") << std::endl;
 
     for (uint8_t i = 0; i < object_count; ++i) {
         objects[i]->trace();
