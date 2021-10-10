@@ -51,7 +51,7 @@ void HiveWidget::paintEvent(QPaintEvent *)
 
     QFontMetrics fontMetrics(font());
     QString fpsMessage = QString("%1 ms rendertime").arg(m_renderTime);
-    painter.drawText(width() - fontMetrics.width(fpsMessage) - 10, height() - fontMetrics.height() / 4, fpsMessage);
+    painter.drawText(width() - fontMetrics.horizontalAdvance(fpsMessage) - 10, height() - fontMetrics.height() / 4, fpsMessage);
 
     QRect groupRect;
     groupRect.moveRight(m_groupsXOffset);
@@ -258,10 +258,10 @@ void HiveWidget::calculate()
         groupNumElements[node.group]++;
     }
 
-    QStringList groups = groupSet.toList();
-    qSort(groups);
-    QStringList subgroups = subgroupSet.toList();
-    qSort(subgroups);
+    QStringList groups = groupSet.values();
+    std::sort(groups.begin(), groups.end());
+    QStringList subgroups = subgroupSet.values();
+    std::sort(subgroups.begin(), subgroups.end());
 
     QList<int> groupCounts = groupNumElements.values();
     int maxGroupSize = *std::max_element(groupCounts.begin(), groupCounts.end());
@@ -276,7 +276,7 @@ void HiveWidget::calculate()
     const int hueStep = 359 / subgroups.count();
     int hue = 0;
     for(const QString &subgroup : subgroups) {
-        maxWidth = qMax(maxWidth, fontMetrics.width(subgroup));
+        maxWidth = qMax(maxWidth, fontMetrics.horizontalAdvance(subgroup));
         m_groupYPositions.insert(subgroup, textY);
         textY += fontMetrics.height();
 
