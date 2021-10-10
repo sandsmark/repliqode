@@ -4,6 +4,7 @@
 #include <QOpenGLWidget>
 #include <QMultiMap>
 #include <QTextDocument>
+#include <QPainterPath>
 #include <memory>
 
 struct Node {

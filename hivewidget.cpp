@@ -287,9 +287,9 @@ void HiveWidget::calculate()
 
     // Calculate some angles
     const int cx = width() / 2;
-    const int cy = 2 * height() / 3;
+    const int cy =  height() / 1.75;
     const double angleStep = (M_PI * 2) / groups.count();
-    const double axisLength = height() / 1.5 - 50;
+    const double axisLength = height() / 1.75 - 50;
     double angle = M_PI / 6;
     QHash<QString, double> groupAngles;
     QHash<QString, double> axisOffsets;

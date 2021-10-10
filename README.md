@@ -6,6 +6,8 @@ Repliqode -- Replicode UI
 Not very complete yet, but allows you to load and run .replicode files, and
 tries to visualize the rmem.
 
+Also just playing a bit with hive plots.
+
 ## Building
 
 To build just open repliqode.pro in QtCreator, or run qmake && make manually
